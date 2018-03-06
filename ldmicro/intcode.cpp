@@ -737,7 +737,7 @@ static void _Op(int l, const char *f, const char *args, int op, BOOL *b,
 
 static void _Op(int l, const char *f, const char *args, int op, const char *name1, const char *name2, SDWORD lit)
 {
-    _Op(l, f, args, op, NULL, name1, name2, NULL, NULL, NULL, NULL, lit, 0, nullptr);
+    _Op(l, f, args, op, NULL, name1, name2, NULL, NULL, NULL, NULL, lit, 0, NULL);
 }
 static void _Op(int l, const char *f, const char *args, int op, const char *name1, SDWORD lit)
 {

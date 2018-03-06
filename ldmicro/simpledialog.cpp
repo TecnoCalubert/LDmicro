@@ -53,10 +53,8 @@ static LRESULT CALLBACK MyAlnumOnlyProc(HWND hwnd, UINT msg, WPARAM wParam,
 {
     if(msg == WM_CHAR) {
         if(!(isalpha(wParam) || isdigit(wParam) || wParam == '_' ||
-            wParam == '@' ||
-            wParam == '#' ||
-            wParam == '\b' || wParam == '-' || wParam == '\''))
-        {
+              wParam == '@' || wParam == '#' || wParam == '\b' ||
+              wParam == '-' || wParam == '\'')) {
             return 0;
         }
     }
@@ -79,11 +77,8 @@ static LRESULT CALLBACK MyNumOnlyProc(HWND hwnd, UINT msg, WPARAM wParam,
     LPARAM lParam)
 {
     if(msg == WM_CHAR) {
-        if(!(ishobdigit(wParam) || wParam == '.' || wParam == '\b'
-            || wParam == '\''
-            || wParam == '\\'
-            || wParam == '-'))
-        {
+        if (!(ishobdigit(wParam) || wParam == '.' || wParam == '\b' ||
+              wParam == '\'' || wParam == '\\' || wParam == '-')) {
             return 0;
         }
     }
@@ -99,7 +94,8 @@ static LRESULT CALLBACK MyNumOnlyProc(HWND hwnd, UINT msg, WPARAM wParam,
     return 0;
 }
 
-static void MakeControls(int labs, const char **labels, int boxes, char **dests, DWORD fixedFontMask, int combo, comboRecord *combos)
+static void MakeControls(int labs, const char **labels, int boxes, char **dests,
+                         DWORD fixedFontMask, int combo, comboRecord *combos)
 {
     int i, j;
     HDC hdc = GetDC(SimpleDialog);
@@ -110,7 +106,8 @@ static void MakeControls(int labs, const char **labels, int boxes, char **dests,
     int maxLen = 0;
     for(i = 0; i < boxes/*labs*/; i++) {
         GetTextExtentPoint32(hdc, labels[i], strlen(labels[i]), &si);
-        if(si.cx > maxLen) maxLen = si.cx;
+        if (si.cx > maxLen)
+            maxLen = si.cx;
     }
 
     int adj;

@@ -46,3 +46,16 @@ del /S *_manifest.rc
 del /S *.bsc
 del /S *.sbr
 del /S *.xml
+
+del *.cpp.file
+del *.h.file
+del *.cpp.LLVM
+del *.h.LLVM
+del *.cpp.Google
+del *.h.Google
+del *.cpp.Chromium
+del *.h.Chromium
+del *.cpp.Mozilla
+del *.h.Mozilla
+del *.cpp.WebKit
+del *.h.WebKit

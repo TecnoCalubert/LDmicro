@@ -28,13 +28,13 @@
 #include "intcode.h"
 
 static char SeenVariables[MAX_IO][MAX_NAME_LEN];
-int SeenVariablesCount;
+int         SeenVariablesCount;
 
 static FILE *fh;
 static FILE *flh;
 
 static int mcu_ISA = -1;
-int compile_MNU = -1;
+int        compile_MNU = -1;
 
 //-----------------------------------------------------------------------------
 // Have we seen a variable before? If not then no need to generate code for
@@ -43,12 +43,13 @@ int compile_MNU = -1;
 static BOOL SeenVariable(const char *name)
 {
     int i;
-    for(i = 0; i < SeenVariablesCount; i++) {
-        if(strcmp(SeenVariables[i], name)==0) {
+    for (i = 0; i < SeenVariablesCount; i++) {
+        if (strcmp(SeenVariables[i], name) == 0) {
             return TRUE;
         }
     }
-    if(i >= MAX_IO) oops();
+    if (i >= MAX_IO)
+        oops();
     strcpy(SeenVariables[i], name);
     SeenVariablesCount++;
     return FALSE;
@@ -64,11 +65,13 @@ static BOOL SeenVariable(const char *name)
 #define ASSTR 3
 static const char *MapSym(const char *str, int how)
 {
-    if(!str) return NULL;
-    if(strlen(str)==0) return NULL;
+    if (!str)
+        return NULL;
+    if (strlen(str) == 0)
+        return NULL;
 
-    static char AllRets[16][MAX_NAME_LEN+30];
-    static int RetCnt;
+    static char AllRets[16][MAX_NAME_LEN + 30];
+    static int  RetCnt;
 
     RetCnt = (RetCnt + 1) & 15;
 
@@ -76,21 +79,21 @@ static const char *MapSym(const char *str, int how)
 
     // The namespace for bit and integer variables is distinct.
     char bit_int;
-    if(how == ASBIT) {
+    if (how == ASBIT) {
         bit_int = 'b';
-    } else if(how == ASINT) {
+    } else if (how == ASINT) {
         bit_int = 'i';
-    } else if(how == ASSTR) {
+    } else if (how == ASSTR) {
         bit_int = 's';
     } else {
         oops();
     }
 
     // User and internal symbols are distinguished.
-    if(IsNumber(str))
+    if (IsNumber(str))
         sprintf(ret, "%s", str);
-    else if(*str == '$') {
-        sprintf(ret, "I%c_%s", bit_int, str+1);
+    else if (*str == '$') {
+        sprintf(ret, "I%c_%s", bit_int, str + 1);
     } else {
         sprintf(ret, "U%c_%s", bit_int, str);
     }
@@ -106,17 +109,17 @@ static const char *MapSym(const char *str)
 //-----------------------------------------------------------------------------
 static void DeclareInt(FILE *f, const char *str, int sov)
 {
-  if(sov==1)
-    fprintf(f, "STATIC SBYTE %s = 0;\n", str);
-  else if(sov==2)
-    fprintf(f, "STATIC SWORD %s = 0;\n", str);
-  else if((sov==3)||(sov==4))
-    fprintf(f, "STATIC SDWORD %s = 0;\n", str);
-  else {
-    fprintf(f, "STATIC SWORD %s = 0;\n", str);
-//  oops();
-  }
-  //fprintf(f, "\n");
+    if (sov == 1)
+        fprintf(f, "STATIC SBYTE %s = 0;\n", str);
+    else if (sov == 2)
+        fprintf(f, "STATIC SWORD %s = 0;\n", str);
+    else if ((sov == 3) || (sov == 4))
+        fprintf(f, "STATIC SDWORD %s = 0;\n", str);
+    else {
+        fprintf(f, "STATIC SWORD %s = 0;\n", str);
+        //  oops();
+    }
+    // fprintf(f, "\n");
 }
 
 //-----------------------------------------------------------------------------
@@ -124,7 +127,7 @@ static void DeclareInt(FILE *f, const char *str, int sov)
 //-----------------------------------------------------------------------------
 static void DeclareStr(FILE *f, const char *str, int sov)
 {
-    fprintf(f,"STATIC char %s[%d];\n", str, sov);
+    fprintf(f, "STATIC char %s[%d];\n", str, sov);
     fprintf(f, "\n");
 }
 
@@ -139,27 +142,29 @@ static void DeclareBit(FILE *f, const char *str, int set1)
     // four to determine if it's an input, output, internal relay.
     int type = NO_PIN_ASSIGNED;
     int i;
-    for(i = 0; i < Prog.io.count; i++) {
-        if(strcmp(Prog.io.assignment[i].name, &str[3])==0) {
+    for (i = 0; i < Prog.io.count; i++) {
+        if (strcmp(Prog.io.assignment[i].name, &str[3]) == 0) {
             type = Prog.io.assignment[i].type;
             break;
         }
     }
 
-    //if(str[3] == 'X') {
-    if(type == IO_TYPE_DIG_INPUT) {
-        if(compile_MNU == MNU_COMPILE_ARDUINO) {
+    // if(str[3] == 'X') {
+    if (type == IO_TYPE_DIG_INPUT) {
+        if (compile_MNU == MNU_COMPILE_ARDUINO) {
             McuIoPinInfo *iop = PinInfoForName(&str[3]);
-            if(iop) {
-              fprintf(flh, "const int pin_%s = %s; // %s\n", str, ArduinoPinName(iop), iop->pinName);
+            if (iop) {
+                fprintf(flh, "const int pin_%s = %s; // %s\n", str,
+                        ArduinoPinName(iop), iop->pinName);
             } else {
-              fprintf(flh, "const int pin_%s = -1;\n", str);
+                fprintf(flh, "const int pin_%s = -1;\n", str);
             }
 
             fprintf(fh, "#ifndef NO_PROTOTYPES\n");
             fprintf(fh, "// LDmicro provide this macro or function.\n");
             fprintf(fh, "#ifdef USE_MACRO\n");
-            fprintf(fh, "    #define Read_%s() digitalRead(pin_%s)\n", str, str);
+            fprintf(fh, "    #define Read_%s() digitalRead(pin_%s)\n", str,
+                    str);
             fprintf(fh, "#else\n");
             fprintf(fh, "    PROTO(ldBOOL Read_%s(void));\n", str);
             fprintf(fh, "#endif\n");
@@ -175,15 +180,18 @@ static void DeclareBit(FILE *f, const char *str, int set1)
             fprintf(f, "\n");
         } else {
             McuIoPinInfo *iop = PinInfoForName(&str[3]);
-            if(iop) {
+            if (iop) {
                 fprintf(fh, "// LDmicro provide this macro or function.\n");
                 fprintf(fh, "#ifdef USE_MACRO\n");
-                if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
-                fprintf(fh, "  #define Read_%s() input_state(PIN_%c%d)\n", str, iop->port, iop->bit);
-                } else if(compile_MNU == MNU_COMPILE_HI_TECH_C) {
-                fprintf(fh, "  #define Read_%s() R%c%d\n", str, iop->port, iop->bit);
+                if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+                    fprintf(fh, "  #define Read_%s() input_state(PIN_%c%d)\n",
+                            str, iop->port, iop->bit);
+                } else if (compile_MNU == MNU_COMPILE_HI_TECH_C) {
+                    fprintf(fh, "  #define Read_%s() R%c%d\n", str, iop->port,
+                            iop->bit);
                 } else {
-                fprintf(fh, "  #define Read_%s() (PIN%c & (1<<PIN%c%d))\n", str, iop->port, iop->port, iop->bit);
+                    fprintf(fh, "  #define Read_%s() (PIN%c & (1<<PIN%c%d))\n",
+                            str, iop->port, iop->port, iop->bit);
                 }
                 fprintf(fh, "#else\n");
                 fprintf(fh, "  PROTO(ldBOOL Read_%s(void));\n", str);
@@ -193,12 +201,14 @@ static void DeclareBit(FILE *f, const char *str, int set1)
                 fprintf(f, "#ifndef USE_MACRO\n");
                 fprintf(f, "// LDmicro provide this function.\n");
                 fprintf(f, "  ldBOOL Read_%s(void) {\n", str);
-                if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
-                fprintf(f, "    return input_state(PIN_%c%d);\n", iop->port, iop->bit);
-                } else if(compile_MNU == MNU_COMPILE_HI_TECH_C) {
-                fprintf(f, "    return R%c%d;\n", iop->port, iop->bit);
+                if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+                    fprintf(f, "    return input_state(PIN_%c%d);\n", iop->port,
+                            iop->bit);
+                } else if (compile_MNU == MNU_COMPILE_HI_TECH_C) {
+                    fprintf(f, "    return R%c%d;\n", iop->port, iop->bit);
                 } else {
-                fprintf(f, "    return PIN%c & (1<<PIN%c%d);\n", iop->port, iop->port, iop->bit);
+                    fprintf(f, "    return PIN%c & (1<<PIN%c%d);\n", iop->port,
+                            iop->port, iop->bit);
                 }
                 fprintf(f, "  }\n");
                 fprintf(f, "#endif\n");
@@ -215,23 +225,27 @@ static void DeclareBit(FILE *f, const char *str, int set1)
             }
         }
 
-//  } else if(str[3] == 'Y') {
-    } else if(type == IO_TYPE_DIG_OUTPUT) {
-        if(compile_MNU == MNU_COMPILE_ARDUINO) {
+    } else if (type == IO_TYPE_DIG_OUTPUT) {
+        if (compile_MNU == MNU_COMPILE_ARDUINO) {
             McuIoPinInfo *iop = PinInfoForName(&str[3]);
-            if(iop) {
-              fprintf(flh, "const int pin_%s = %s; // %s\n", str, ArduinoPinName(iop), iop->pinName);
+            if (iop) {
+                fprintf(flh, "const int pin_%s = %s; // %s\n", str,
+                        ArduinoPinName(iop), iop->pinName);
             } else {
-              fprintf(flh, "const int pin_%s = -1;\n", str);
+                fprintf(flh, "const int pin_%s = -1;\n", str);
             }
 
             fprintf(fh, "#ifndef NO_PROTOTYPES\n");
             fprintf(fh, "// LDmicro provide these macros or functions.\n");
             fprintf(fh, "#ifdef USE_MACRO\n");
             fprintf(fh, "  #define Read_%s() digitalRead(pin_%s)\n", str, str);
-            fprintf(fh, "  #define Write0_%s() digitalWrite(pin_%s, LOW)\n", str, str);
-            fprintf(fh, "  #define Write1_%s() digitalWrite(pin_%s, HIGH)\n", str, str);
-            fprintf(fh, "  #define Write_%s(b) (b) ? Write1_%s() : Write0_%s()\n", str, str, str);
+            fprintf(fh, "  #define Write0_%s() digitalWrite(pin_%s, LOW)\n",
+                    str, str);
+            fprintf(fh, "  #define Write1_%s() digitalWrite(pin_%s, HIGH)\n",
+                    str, str);
+            fprintf(fh,
+                    "  #define Write_%s(b) (b) ? Write1_%s() : Write0_%s()\n",
+                    str, str, str);
             fprintf(fh, "#else\n");
             fprintf(fh, "  PROTO(ldBOOL Read_%s(void));\n", str);
             fprintf(fh, "  PROTO(void Write_%s(ldBOOL b));\n", str);
@@ -247,40 +261,60 @@ static void DeclareBit(FILE *f, const char *str, int set1)
             fprintf(f, "    return digitalRead(pin_%s);\n", str);
             fprintf(f, "}\n");
             fprintf(f, "void Write_%s(ldBOOL b) {\n", str);
-            fprintf(f, "    digitalWrite(pin_%s,b);\n",str);
+            fprintf(f, "    digitalWrite(pin_%s,b);\n", str);
             fprintf(f, "}\n");
             fprintf(f, "void Write1_%s(void) {\n", str);
-            fprintf(f, "    digitalWrite(pin_%s,HIGH);\n",str);
+            fprintf(f, "    digitalWrite(pin_%s,HIGH);\n", str);
             fprintf(f, "}\n");
             fprintf(f, "void Write0_%s(void) {\n", str);
-            fprintf(f, "    digitalWrite(pin_%s,LOW);\n",str);
+            fprintf(f, "    digitalWrite(pin_%s,LOW);\n", str);
             fprintf(f, "}\n");
             fprintf(f, "#endif\n");
             fprintf(f, "\n");
         } else {
             McuIoPinInfo *iop = PinInfoForName(&str[3]);
-            if(iop) {
+            if (iop) {
                 fprintf(fh, "#ifdef USE_MACRO\n");
                 fprintf(fh, "// LDmicro provide these functions.\n");
-                if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
-                fprintf(fh, "  #define Read_%s() input_state(PIN_%c%d)\n", str, iop->port, iop->bit);
-                } else if(compile_MNU == MNU_COMPILE_HI_TECH_C) {
-                fprintf(fh, "  #define Read_%s() R%c%d\n", str, iop->port, iop->bit);
+                if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+                    fprintf(fh, "  #define Read_%s() input_state(PIN_%c%d)\n",
+                            str, iop->port, iop->bit);
+                } else if (compile_MNU == MNU_COMPILE_HI_TECH_C) {
+                    fprintf(fh, "  #define Read_%s() R%c%d\n", str, iop->port,
+                            iop->bit);
                 } else {
-                fprintf(fh, "  #define Read_%s() (PORT%c & (1<<PORT%c%d))\n", str, iop->port, iop->port, iop->bit);
+                    fprintf(fh,
+                            "  #define Read_%s() (PORT%c & (1<<PORT%c%d))\n",
+                            str, iop->port, iop->port, iop->bit);
                 }
-                if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
-                fprintf(fh, "  #define Write0_%s() output_low(PIN_%c%d)\n", str, iop->port, iop->bit);
-                fprintf(fh, "  #define Write1_%s() output_high(PIN_%c%d)\n", str, iop->port, iop->bit);
-                fprintf(fh, "  #define Write_%s(b) (b) ? Write1_%s() : Write0_%s()\n", str, str, str);
-                } else if(compile_MNU == MNU_COMPILE_HI_TECH_C) {
-                fprintf(fh, "  #define Write0_%s() (R%c%d = 0)\n", str, iop->port, iop->bit);
-                fprintf(fh, "  #define Write1_%s() (R%c%d = 1)\n", str, iop->port, iop->bit);
-                fprintf(fh, "  #define Write_%s(b) R%c%d = (b) ? 1 : 0\n", str, iop->port, iop->bit);
+                if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+                    fprintf(fh, "  #define Write0_%s() output_low(PIN_%c%d)\n",
+                            str, iop->port, iop->bit);
+                    fprintf(fh, "  #define Write1_%s() output_high(PIN_%c%d)\n",
+                            str, iop->port, iop->bit);
+                    fprintf(fh,
+                            "  #define Write_%s(b) (b) ? Write1_%s() : "
+                            "Write0_%s()\n",
+                            str, str, str);
+                } else if (compile_MNU == MNU_COMPILE_HI_TECH_C) {
+                    fprintf(fh, "  #define Write0_%s() (R%c%d = 0)\n", str,
+                            iop->port, iop->bit);
+                    fprintf(fh, "  #define Write1_%s() (R%c%d = 1)\n", str,
+                            iop->port, iop->bit);
+                    fprintf(fh, "  #define Write_%s(b) R%c%d = (b) ? 1 : 0\n",
+                            str, iop->port, iop->bit);
                 } else {
-                fprintf(fh, "  #define Write0_%s() (PORT%c &= ~(1<<PORT%c%d))\n", str, iop->port, iop->port, iop->bit);
-                fprintf(fh, "  #define Write1_%s() (PORT%c |= 1<<PORT%c%d)\n", str, iop->port, iop->port, iop->bit);
-                fprintf(fh, "  #define Write_%s(b) (b) ? Write1_%s() : Write0_%s()\n", str, str, str);
+                    fprintf(
+                        fh,
+                        "  #define Write0_%s() (PORT%c &= ~(1<<PORT%c%d))\n",
+                        str, iop->port, iop->port, iop->bit);
+                    fprintf(fh,
+                            "  #define Write1_%s() (PORT%c |= 1<<PORT%c%d)\n",
+                            str, iop->port, iop->port, iop->bit);
+                    fprintf(fh,
+                            "  #define Write_%s(b) (b) ? Write1_%s() : "
+                            "Write0_%s()\n",
+                            str, str, str);
                 }
                 fprintf(fh, "#else\n");
                 fprintf(fh, "  PROTO(ldBOOL Read_%s(void));\n", str);
@@ -291,45 +325,55 @@ static void DeclareBit(FILE *f, const char *str, int set1)
                 fprintf(f, "#ifndef USE_MACRO\n");
                 fprintf(f, "// LDmicro provide these functions.\n");
                 fprintf(f, "  ldBOOL Read_%s(void) {\n", str);
-                if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
-                fprintf(f, "    return input_state(PIN_%c%d);\n", iop->port, iop->bit);
-                } else if(compile_MNU == MNU_COMPILE_HI_TECH_C) {
-                fprintf(f, "    return R%c%d;\n", iop->port, iop->bit);
+                if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+                    fprintf(f, "    return input_state(PIN_%c%d);\n", iop->port,
+                            iop->bit);
+                } else if (compile_MNU == MNU_COMPILE_HI_TECH_C) {
+                    fprintf(f, "    return R%c%d;\n", iop->port, iop->bit);
                 } else {
-                fprintf(f, "    return PORT%c & (1<<PORT%c%d);\n", iop->port, iop->port, iop->bit);
+                    fprintf(f, "    return PORT%c & (1<<PORT%c%d);\n",
+                            iop->port, iop->port, iop->bit);
                 }
                 fprintf(f, "  }\n");
                 fprintf(f, "  void Write_%s(ldBOOL b) {\n", str);
-                if(compile_MNU == MNU_COMPILE_HI_TECH_C) {
-                fprintf(f, "      R%c%d = b != 0;\n", iop->port, iop->bit);
-                } else if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
-                fprintf(f, "    if(b)\n");
-                fprintf(f, "      output_high(PIN_%c%d);\n", iop->port, iop->bit);
-                fprintf(f, "    else\n");
-                fprintf(f, "      output_low(PIN_%c%d);\n", iop->port, iop->bit);
+                if (compile_MNU == MNU_COMPILE_HI_TECH_C) {
+                    fprintf(f, "      R%c%d = b != 0;\n", iop->port, iop->bit);
+                } else if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+                    fprintf(f, "    if(b)\n");
+                    fprintf(f, "      output_high(PIN_%c%d);\n", iop->port,
+                            iop->bit);
+                    fprintf(f, "    else\n");
+                    fprintf(f, "      output_low(PIN_%c%d);\n", iop->port,
+                            iop->bit);
                 } else {
-                fprintf(f, "    if(b)\n");
-                fprintf(f, "      PORT%c |= 1<<PORT%c%d;\n", iop->port, iop->port, iop->bit);
-                fprintf(f, "    else\n");
-                fprintf(f, "      PORT%c &= ~(1<<PORT%c%d);\n", iop->port, iop->port, iop->bit);
+                    fprintf(f, "    if(b)\n");
+                    fprintf(f, "      PORT%c |= 1<<PORT%c%d;\n", iop->port,
+                            iop->port, iop->bit);
+                    fprintf(f, "    else\n");
+                    fprintf(f, "      PORT%c &= ~(1<<PORT%c%d);\n", iop->port,
+                            iop->port, iop->bit);
                 }
                 fprintf(f, "  }\n");
                 fprintf(f, "  void Write1_%s(void) {\n", str);
-                if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
-                fprintf(f, "      output_high(PIN_%c%d);\n", iop->port, iop->bit);
-                } else if(compile_MNU == MNU_COMPILE_HI_TECH_C) {
-                fprintf(f, "      R%c%d = 1;\n", iop->port, iop->bit);
+                if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+                    fprintf(f, "      output_high(PIN_%c%d);\n", iop->port,
+                            iop->bit);
+                } else if (compile_MNU == MNU_COMPILE_HI_TECH_C) {
+                    fprintf(f, "      R%c%d = 1;\n", iop->port, iop->bit);
                 } else {
-                fprintf(f, "      PORT%c |= 1<<PORT%c%d;\n", iop->port, iop->port, iop->bit);
+                    fprintf(f, "      PORT%c |= 1<<PORT%c%d;\n", iop->port,
+                            iop->port, iop->bit);
                 }
                 fprintf(f, "  }\n");
                 fprintf(f, "  void Write0_%s(void) {\n", str);
-                if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
-                fprintf(f, "      output_low(PIN_%c%d);\n", iop->port, iop->bit);
-                } else if(compile_MNU == MNU_COMPILE_HI_TECH_C) {
-                fprintf(f, "      R%c%d = 0;\n", iop->port, iop->bit);
+                if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+                    fprintf(f, "      output_low(PIN_%c%d);\n", iop->port,
+                            iop->bit);
+                } else if (compile_MNU == MNU_COMPILE_HI_TECH_C) {
+                    fprintf(f, "      R%c%d = 0;\n", iop->port, iop->bit);
                 } else {
-                fprintf(f, "      PORT%c &= ~(1<<PORT%c%d);\n", iop->port, iop->port, iop->bit);
+                    fprintf(f, "      PORT%c &= ~(1<<PORT%c%d);\n", iop->port,
+                            iop->port, iop->bit);
                 }
                 fprintf(f, "  }\n");
                 fprintf(f, "#endif\n");
@@ -348,18 +392,25 @@ static void DeclareBit(FILE *f, const char *str, int set1)
         }
 
     } else if (type == IO_TYPE_PWM_OUTPUT) {
-        if(compile_MNU == MNU_COMPILE_ARDUINO) {
+        if (compile_MNU == MNU_COMPILE_ARDUINO) {
             McuIoPinInfo *iop = PinInfoForName(&str[3]);
-            if(iop) {
-              fprintf(flh, "const int pin_%s = %s; // %s // Check that it's a PWM pin!\n", str, ArduinoPinName(iop), iop->pinName);
+            if (iop) {
+                fprintf(flh,
+                        "const int pin_%s = %s; // %s // Check that it's a PWM "
+                        "pin!\n",
+                        str, ArduinoPinName(iop), iop->pinName);
             } else {
-              fprintf(flh, "const int pin_%s = -1; // Check that it's a PWM pin!\n", str);
+                fprintf(
+                    flh,
+                    "const int pin_%s = -1; // Check that it's a PWM pin!\n",
+                    str);
             }
 
             fprintf(fh, "#ifndef NO_PROTOTYPES\n");
             fprintf(fh, "// LDmicro provide this macro or function.\n");
             fprintf(fh, "#ifdef USE_MACRO\n");
-            fprintf(fh, "  #define Write_%s(x) analogWrite(pin_%s, x)\n", str, str);
+            fprintf(fh, "  #define Write_%s(x) analogWrite(pin_%s, x)\n", str,
+                    str);
             fprintf(fh, "#else\n");
             fprintf(fh, "  void Write_%s(SWORD x);\n", str);
             fprintf(fh, "#endif\n");
@@ -373,11 +424,14 @@ static void DeclareBit(FILE *f, const char *str, int set1)
             fprintf(f, "  }\n");
             fprintf(f, "#endif\n");
             fprintf(f, "\n");
-        } else if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+        } else if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
             fprintf(fh, "#ifndef NO_PROTOTYPES\n");
             fprintf(fh, "// LDmicro provide this macro or function.\n");
             fprintf(fh, "#ifdef USE_MACRO\n");
-            fprintf(fh, "  #define Write_%s(x) pwm_set_duty_percent(x); pwm_on();\n", str);
+            fprintf(
+                fh,
+                "  #define Write_%s(x) pwm_set_duty_percent(x); pwm_on();\n",
+                str);
             fprintf(fh, "#else\n");
             fprintf(fh, "  void Write_%s(SWORD x);\n", str);
             fprintf(fh, "#endif\n");
@@ -399,12 +453,18 @@ static void DeclareBit(FILE *f, const char *str, int set1)
             fprintf(f, "}\n");
         }
     } else if (type == IO_TYPE_READ_ADC) {
-        if(compile_MNU == MNU_COMPILE_ARDUINO) {
+        if (compile_MNU == MNU_COMPILE_ARDUINO) {
             McuIoPinInfo *iop = PinInfoForName(&str[3]);
-            if(iop) {
-              fprintf(flh, "const int pin_%s = %s; // %s // Check that it's a ADC pin!\n", str, ArduinoPinName(iop), iop->pinName);
+            if (iop) {
+                fprintf(flh,
+                        "const int pin_%s = %s; // %s // Check that it's a ADC "
+                        "pin!\n",
+                        str, ArduinoPinName(iop), iop->pinName);
             } else {
-              fprintf(flh, "const int pin_%s = -1; // Check that it's a ADC pin!\n", str);
+                fprintf(
+                    flh,
+                    "const int pin_%s = -1; // Check that it's a ADC pin!\n",
+                    str);
             }
 
             fprintf(fh, "#ifndef NO_PROTOTYPES\n");
@@ -424,7 +484,7 @@ static void DeclareBit(FILE *f, const char *str, int set1)
             fprintf(f, "}\n");
             fprintf(f, "#endif\n");
             fprintf(f, "\n");
-        } else if(compile_MNU == MNU_COMPILE_CCS_PIC_C) {
+        } else if (compile_MNU == MNU_COMPILE_CCS_PIC_C) {
             fprintf(fh, "#ifndef NO_PROTOTYPES\n");
             fprintf(fh, "// LDmicro provide this function.\n");
             fprintf(fh, "  SWORD Read_%s(void);\n", str);
@@ -445,7 +505,7 @@ static void DeclareBit(FILE *f, const char *str, int set1)
         }
     } else {
         fprintf(f, "STATIC ldBOOL %s = 0;\n", str);
-//      fprintf(f, "\n");
+        //      fprintf(f, "\n");
         fprintf(fh, "#define Read_%s() %s\n", str, str);
         fprintf(fh, "#define Write_%s(x) (%s = x)\n", str, str);
         fprintf(fh, "#define Write0_%s() (%s = 0)\n", str, str);
@@ -466,20 +526,22 @@ static void DeclareBit(FILE *f, const char *str)
 static void GenerateDeclarations(FILE *f)
 {
     DWORD addr, addr2;
-    int bit, bit2;
+    int   bit, bit2;
 
     int i;
-    for(i = 0; i < IntCodeLen; i++) {
+    for (i = 0; i < IntCodeLen; i++) {
         const char *bitVar1 = NULL, *bitVar2 = NULL;
         const char *intVar1 = NULL, *intVar2 = NULL, *intVar3 = NULL;
         const char *adcVar1 = NULL;
         const char *strVar1 = NULL;
-        int sov1=0, sov2=0, sov3=0;
+        int         sov1 = 0, sov2 = 0, sov3 = 0;
 
         int bitVar1set1 = 0;
 
-        addr=0;  bit=0;
-        addr2=0; bit2=0;
+        addr = 0;
+        bit = 0;
+        addr2 = 0;
+        bit2 = 0;
 
         IntOp *a = &IntCode[i];
 
@@ -674,29 +736,40 @@ static void GenerateDeclarations(FILE *f)
         bitVar1 = MapSym(bitVar1, ASBIT);
         bitVar2 = MapSym(bitVar2, ASBIT);
 
-        if(intVar1) sov1 = SizeOfVar(intVar1);
-        if(intVar2) sov2 = SizeOfVar(intVar2);
-        if(intVar3) sov3 = SizeOfVar(intVar3);
+        if (intVar1)
+            sov1 = SizeOfVar(intVar1);
+        if (intVar2)
+            sov2 = SizeOfVar(intVar2);
+        if (intVar3)
+            sov3 = SizeOfVar(intVar3);
 
         intVar1 = MapSym(intVar1, ASINT);
         intVar2 = MapSym(intVar2, ASINT);
         intVar3 = MapSym(intVar3, ASINT);
 
-        if(bitVar1 && !SeenVariable(bitVar1)) DeclareBit(f, bitVar1, bitVar1set1);
-        if(bitVar2 && !SeenVariable(bitVar2)) DeclareBit(f, bitVar2);
+        if (bitVar1 && !SeenVariable(bitVar1))
+            DeclareBit(f, bitVar1, bitVar1set1);
+        if (bitVar2 && !SeenVariable(bitVar2))
+            DeclareBit(f, bitVar2);
 
-        if(intVar1 && !SeenVariable(intVar1)) DeclareInt(f, intVar1, sov1);
-        if(intVar2 && !SeenVariable(intVar2)) DeclareInt(f, intVar2, sov2);
-        if(intVar3 && !SeenVariable(intVar3)) DeclareInt(f, intVar3, sov3);
+        if (intVar1 && !SeenVariable(intVar1))
+            DeclareInt(f, intVar1, sov1);
+        if (intVar2 && !SeenVariable(intVar2))
+            DeclareInt(f, intVar2, sov2);
+        if (intVar3 && !SeenVariable(intVar3))
+            DeclareInt(f, intVar3, sov3);
 
-        if(strVar1) sov1 = SizeOfVar(strVar1);
+        if (strVar1)
+            sov1 = SizeOfVar(strVar1);
         strVar1 = MapSym(strVar1, ASSTR);
-        if(strVar1 && !SeenVariable(strVar1)) DeclareStr(f, strVar1, sov1);
+        if (strVar1 && !SeenVariable(strVar1))
+            DeclareStr(f, strVar1, sov1);
     }
-    if(Prog.cycleDuty) {
+    if (Prog.cycleDuty) {
         const char *bitVar1 = NULL;
         bitVar1 = MapSym("YPlcCycleDuty", ASBIT);
-        if(bitVar1 && !SeenVariable(bitVar1)) DeclareBit(f, bitVar1);
+        if (bitVar1 && !SeenVariable(bitVar1))
+            DeclareBit(f, bitVar1);
     }
 }
 
@@ -706,7 +779,7 @@ static void GenerateDeclarations(FILE *f)
 static void _Comment(FILE *f, const char *str, ...)
 {
     va_list v;
-    char buf[MAX_NAME_LEN];
+    char    buf[MAX_NAME_LEN];
     va_start(v, str);
     vsnprintf(buf, MAX_NAME_LEN, str, v);
     fprintf(f, "//%s\n", buf);
@@ -714,14 +787,16 @@ static void _Comment(FILE *f, const char *str, ...)
 #define Comment(...) _Comment(f, __VA_ARGS__)
 
 //-----------------------------------------------------------------------------
-static int indent = 1;
+static int  indent = 1;
 static void doIndent(FILE *f, int i)
 {
    int j;
-   if((IntCode[i].op != INT_SIMULATE_NODE_STATE)
-   && (IntCode[i].op != INT_AllocKnownAddr) //
-   && (IntCode[i].op != INT_AllocFwdAddr))
-       for(j = 0; j < indent; j++) fprintf(f, "    ");
+    if ((IntCode[i].op != INT_SIMULATE_NODE_STATE) &&
+        (IntCode[i].op != INT_AllocKnownAddr) &&
+        (IntCode[i].op != INT_AllocFwdAddr))
+        for (j = 0; j < indent; j++)
+            fprintf(f, "    ");
+    fprintf(f, "    ");
 }
 //-----------------------------------------------------------------------------
 // Actually generate the C source for the program.
@@ -733,23 +808,25 @@ static void GenerateAnsiC(FILE *f, int begin, int end)
     int i;
     for(i = begin; i <= end; i++) {
 
-        if(IntCode[i].op == INT_END_IF) indent--;
-        if(IntCode[i].op == INT_ELSE) indent--;
+        if (IntCode[i].op == INT_END_IF)
+            indent--;
+        if (IntCode[i].op == INT_ELSE)
+            indent--;
 
         doIndent(f, i);
 
         switch(IntCode[i].op) {
             case INT_SET_BIT:
-                if((IntCode[i].name1[0] != '$')
-                && (IntCode[i].name1[0] != 'R'))
+                if((IntCode[i].name1[0] != '$') &&// 1
+                (IntCode[i].name1[0] != 'R')) //2
                   fprintf(f, "Write1_%s();\n", MapSym(IntCode[i].name1, ASBIT));
                 else
                   fprintf(f, "Write_%s(1);\n", MapSym(IntCode[i].name1, ASBIT));
                 break;
 
             case INT_CLEAR_BIT:
-                if((IntCode[i].name1[0] != '$')
-                && (IntCode[i].name1[0] != 'R'))
+                if((IntCode[i].name1[0] != '$') // 1
+                && (IntCode[i].name1[0] != 'R')) // 2
                   fprintf(f, "Write0_%s();\n", MapSym(IntCode[i].name1, ASBIT));
                 else
                   fprintf(f, "Write_%s(0);\n", MapSym(IntCode[i].name1, ASBIT));

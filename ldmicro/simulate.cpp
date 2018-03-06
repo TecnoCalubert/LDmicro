@@ -37,23 +37,25 @@ static struct {
 static int SingleBitItemsCount;
 
 static struct {
-    char    name[MAX_NAME_LEN];
-    SDWORD  val;
-    char    valstr[MAX_COMMENT_LEN]; // value in simulation mode for STRING types.
-    DWORD   usedFlags;
-    int     initedRung; // Variable inited in rung.
-    DWORD   initedOp;   // Variable inited in Op number.
-    char    usedRungs[MAX_COMMENT_LEN]; // Rungs, where variable is used.
+    char   name[MAX_NAME_LEN];     //
+    SDWORD val;                    //
+    char  valstr[MAX_COMMENT_LEN]; // value in simulation mode for STRING types.
+    DWORD usedFlags;               //
+    int   initedRung;              // Variable inited in rung.
+    DWORD initedOp;                // Variable inited in Op number.
+    char  usedRungs[MAX_COMMENT_LEN]; // Rungs, where variable is used.
 } Variables[MAX_IO];
 static int VariableCount;
 
 DWORD CyclesCount; // Simulated
 
 static struct {
-    char    name[MAX_NAME_LEN];
-    SWORD   val;
+    char  name[MAX_NAME_LEN];
+    SWORD val;
 } AdcShadows[MAX_IO];
 static int AdcShadowsCount;
+
+// clang-format off
 
 #define VAR_FLAG_TON                  0x00000001
 #define VAR_FLAG_TOF                  0x00000002
@@ -75,6 +77,8 @@ static int AdcShadowsCount;
 #define VAR_FLAG_ANY                  0x08000000
 
 #define VAR_FLAG_OTHERWISE_FORGOTTEN  0x80000000
+
+// clang-format on
 
 // Schematic-drawing code needs to know whether we're in simulation mode or
 // note, as that changes how everything is drawn; also UI code, to disable
@@ -102,40 +106,43 @@ static FILE *fUART;
 
 // A window to allow simulation with the UART stuff (insert keystrokes into
 // the program, view the output, like a terminal window).
-static HWND UartSimulationWindow = NULL;
-static HWND UartSimulationTextControl;
+static HWND     UartSimulationWindow = NULL;
+static HWND     UartSimulationTextControl;
 static LONG_PTR PrevTextProc;
 
 static int QueuedUartCharacter = -1;
-static int SimulateUartTxCountdown = 0; // 0 if UART ready to send; 1 if UART busy
+static int SimulateUartTxCountdown = 0; // 0 if UART ready to send;
+                                        // 1 if UART busy
 
 static void AppendToUartSimulationTextControl(BYTE b);
 
-static void SimulateIntCode(void);
-static const char *MarkUsedVariable(const char* name, DWORD flag);
+static void        SimulateIntCode(void);
+static const char *MarkUsedVariable(const char *name, DWORD flag);
 
 //-----------------------------------------------------------------------------
 int isVarInited(char *name)
 {
     int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
             break;
         }
     }
-    if(i >= VariableCount) return -1;
+    if (i >= VariableCount)
+        return -1;
     return Variables[i].initedRung;
 }
 //-----------------------------------------------------------------------------
 DWORD isVarUsed(char *name)
 {
     int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
             break;
         }
     }
-    if(i >= MAX_IO) return 0;
+    if (i >= MAX_IO)
+        return 0;
 
     return Variables[i].usedFlags;
 }
@@ -147,8 +154,8 @@ DWORD isVarUsed(char *name)
 static BOOL SingleBitOn(char *name)
 {
     int i;
-    for(i = 0; i < SingleBitItemsCount; i++) {
-        if(strcmp(SingleBitItems[i].name, name)==0) {
+    for (i = 0; i < SingleBitItemsCount; i++) {
+        if (strcmp(SingleBitItems[i].name, name) == 0) {
             return SingleBitItems[i].powered;
         }
     }
@@ -162,13 +169,13 @@ static BOOL SingleBitOn(char *name)
 static void SetSingleBit(const char *name, BOOL state)
 {
     int i;
-    for(i = 0; i < SingleBitItemsCount; i++) {
-        if(strcmp(SingleBitItems[i].name, name)==0) {
+    for (i = 0; i < SingleBitItemsCount; i++) {
+        if (strcmp(SingleBitItems[i].name, name) == 0) {
             SingleBitItems[i].powered = state;
             return;
         }
     }
-    if(i < MAX_IO) {
+    if (i < MAX_IO) {
         strcpy(SingleBitItems[i].name, name);
         SingleBitItems[i].powered = state;
         SingleBitItemsCount++;
@@ -184,23 +191,25 @@ BOOL GetSingleBit(char *name)
 // Count a timer up (i.e. increment its associated count by 1). Must already
 // exist in the table.
 //-----------------------------------------------------------------------------
-static void Increment(const char *name, const char *overlap, const char *overflow)
+static void Increment(const char *name, const char *overlap,
+                      const char *overflow)
 {
-    int sov = SizeOfVar(name);
+    int    sov = SizeOfVar(name);
     SDWORD signMask = 1 << (sov * 8 - 1);
     SDWORD signBefore, signAfter;
-    int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
+    int    i;
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
             signBefore = Variables[i].val & signMask;
             (Variables[i].val)++;
             signAfter = Variables[i].val & signMask;
-            if((signBefore == 0) && (signAfter != 0)) {
-              SetSingleBit(overflow, TRUE);
-              Variables[i].val &= (1 << (8 * sov)) - 1;
+            if ((signBefore == 0) && (signAfter != 0)) {
+                SetSingleBit(overflow, TRUE);
+                Variables[i].val &= (1 << (8 * sov)) - 1;
             }
 
-            SetSingleBit(overlap, Variables[i].val == 0); // OVERLAP 11...11 -> 00...00
+            SetSingleBit(overlap, Variables[i].val == 0);
+            // OVERLAP 11...11 -> 00...00
             return;
         }
     }
@@ -208,23 +217,25 @@ static void Increment(const char *name, const char *overlap, const char *overflo
 }
 
 //-----------------------------------------------------------------------------
-static void Decrement(const char *name, const char *overlap, const char *overflow)
+static void Decrement(const char *name, const char *overlap,
+                      const char *overflow)
 {
-    int sov = SizeOfVar(name);
+    int    sov = SizeOfVar(name);
     SDWORD signMask = 1 << (sov * 8 - 1);
     SDWORD signBefore, signAfter;
-    int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
-            SetSingleBit(overlap, Variables[i].val == 0); // OVERLAP 00...00 -> 11...11
+    int    i;
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
+            SetSingleBit(overlap, Variables[i].val == 0);
+            // OVERLAP 00...00 -> 11...11
 
             signBefore = Variables[i].val & signMask;
             (Variables[i].val)--;
             signAfter = Variables[i].val & signMask;
 
-            if((signBefore != 0) && (signAfter == 0)) {
-              SetSingleBit(overflow, TRUE);
-              Variables[i].val &= (1 << (8 * sov)) - 1;
+            if ((signBefore != 0) && (signAfter == 0)) {
+                SetSingleBit(overflow, TRUE);
+                Variables[i].val &= (1 << (8 * sov)) - 1;
             }
             return;
         }
@@ -233,35 +244,37 @@ static void Decrement(const char *name, const char *overlap, const char *overflo
 }
 
 //-----------------------------------------------------------------------------
-static SDWORD AddVariable(const char *name1, const char *name2, const char *name3, const char *overflow)
+static SDWORD AddVariable(const char *name1, const char *name2,
+                          const char *name3, const char *overflow)
 {
-    long long int ret = (long long int )GetSimulationVariable(name2) +
-                        (long long int )GetSimulationVariable(name3);
-    int sov = SizeOfVar(name1);
+    long long int ret = (long long int)GetSimulationVariable(name2) +
+                        (long long int)GetSimulationVariable(name3);
+    int    sov = SizeOfVar(name1);
     SDWORD signMask = 1 << (sov * 8 - 1);
     SDWORD sign2 = GetSimulationVariable(name2) & signMask;
     SDWORD sign3 = GetSimulationVariable(name3) & signMask;
     SDWORD signr = (SDWORD)(ret & signMask);
-    if((sign2 == sign3)
-    && (signr != sign3))
+    if ((sign2 == sign3) && //
+        (signr != sign3))
         SetSingleBit(overflow, TRUE);
     return (SDWORD)ret;
 }
 
 //-----------------------------------------------------------------------------
-static SDWORD SubVariable(const char *name1, const char *name2, const char *name3, const char *overflow)
+static SDWORD SubVariable(const char *name1, const char *name2,
+                          const char *name3, const char *overflow)
 {
-    long long int ret = (long long int )GetSimulationVariable(name2) -
-                        (long long int )GetSimulationVariable(name3);
-    int sov = SizeOfVar(name1);
+    long long int ret = (long long int)GetSimulationVariable(name2) -
+                        (long long int)GetSimulationVariable(name3);
+    int    sov = SizeOfVar(name1);
     SDWORD signMask = 1 << (sov * 8 - 1);
     SDWORD sign2 = GetSimulationVariable(name2) & signMask;
     SDWORD sign3 = GetSimulationVariable(name3) & signMask;
     SDWORD signr = (SDWORD)(ret & signMask);
-//  if((sign2 != sign3)
-//  && (signr != sign2))
-    if((sign2 != sign3)
-    && (signr == sign3))
+    //  if((sign2 != sign3)
+    //  && (signr != sign2))
+    if ((sign2 != sign3) && //
+        (signr == sign3))
         SetSingleBit(overflow, TRUE);
     return (SDWORD)ret;
 }
@@ -272,8 +285,8 @@ static SDWORD SubVariable(const char *name1, const char *name2, const char *name
 void SetSimulationVariable(char *name, SDWORD val)
 {
     int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
             Variables[i].val = val;
             return;
         }
@@ -287,16 +300,17 @@ void SetSimulationVariable(char *name, SDWORD val)
 //-----------------------------------------------------------------------------
 SDWORD GetSimulationVariable(const char *name, BOOL forIoList)
 {
-    if(IsNumber(name)) {
+    if (IsNumber(name)) {
         return CheckMakeNumber(name);
     }
     int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
             return Variables[i].val;
         }
     }
-    if(forIoList) return 0;
+    if (forIoList)
+        return 0;
     MarkUsedVariable(name, VAR_FLAG_OTHERWISE_FORGOTTEN);
     return GetSimulationVariable(name);
 }
@@ -312,14 +326,12 @@ SDWORD GetSimulationVariable(const char *name)
 void SetSimulationStr(char *name, char *val)
 {
     int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
             strcpy(Variables[i].valstr, val);
-            //dbp("VAR '%s':=%s", name, val);
             return;
         }
     }
-    //dbp("SET %s",name);
     MarkUsedVariable(name, VAR_FLAG_OTHERWISE_FORGOTTEN);
     SetSimulationStr(name, val);
 }
@@ -330,13 +342,11 @@ void SetSimulationStr(char *name, char *val)
 char *GetSimulationStr(char *name)
 {
     int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
-            //dbp("GET '%s'",name);
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
             return Variables[i].valstr;
         }
     }
-    //dbp("GET %s",name);
     MarkUsedVariable(name, VAR_FLAG_OTHERWISE_FORGOTTEN);
     return GetSimulationStr(name);
 }
@@ -349,8 +359,8 @@ char *GetSimulationStr(char *name)
 void SetAdcShadow(char *name, SWORD val)
 {
     int i;
-    for(i = 0; i < AdcShadowsCount; i++) {
-        if(strcmp(AdcShadows[i].name, name)==0) {
+    for (i = 0; i < AdcShadowsCount; i++) {
+        if (strcmp(AdcShadows[i].name, name) == 0) {
             AdcShadows[i].val = val;
             return;
         }
@@ -367,8 +377,8 @@ void SetAdcShadow(char *name, SWORD val)
 SWORD GetAdcShadow(char *name)
 {
     int i;
-    for(i = 0; i < AdcShadowsCount; i++) {
-        if(strcmp(AdcShadows[i].name, name)==0) {
+    for (i = 0; i < AdcShadowsCount; i++) {
+        if (strcmp(AdcShadows[i].name, name) == 0) {
             return AdcShadows[i].val;
         }
     }
@@ -376,80 +386,81 @@ SWORD GetAdcShadow(char *name)
 }
 
 //-----------------------------------------------------------------------------
-//https://en.m.wikipedia.org/wiki/Linear_congruential_generator
+// https://en.m.wikipedia.org/wiki/Linear_congruential_generator
 // X[n+1] = (a * X[n] + c) mod m
-//VMS's MTH$RANDOM, old versions of glibc
+// VMS's MTH$RANDOM, old versions of glibc
 // a = 69069 ( 0x10DCD ) (1 00001101 11001101b)
 // c = 1
 // m = 2 ** 32
 static unsigned long long seed = 1;
+//
 SDWORD MthRandom()
 {
-//  seed = (seed * 69069 + 1) % 4294967296;
+    // seed = (seed * 69069 + 1) % 4294967296;
     seed = (seed * 69069 + 1) & 0xFFFFffff;
     return (SDWORD)seed;
 }
 
 SDWORD GetRandom(char *name)
 {
-    int sov = SizeOfVar(name);
+    int    sov = SizeOfVar(name);
     SDWORD seed = MthRandom();
-    char seedName[MAX_NAME_LEN];
+    char   seedName[MAX_NAME_LEN];
     sprintf(seedName, "$seed_%s", name);
     SetSimulationVariable(seedName, seed);
-    if(sov == 1)
-       return (signed char)(seed >> (8 * (4 - sov)));
-    else if(sov == 2)
-       return (SWORD)(seed >> (8 * (4 - sov)));
-    else if(sov >= 3)
-       return (SDWORD)(seed >> (8 * (4 - sov)));
+    if (sov == 1)
+        return (signed char)(seed >> (8 * (4 - sov)));
+    else if (sov == 2)
+        return (SWORD)(seed >> (8 * (4 - sov)));
+    else if (sov >= 3)
+        return (SDWORD)(seed >> (8 * (4 - sov)));
     else {
-       oops();
-       return 0;
+        oops();
+        return 0;
     }
 }
 
 //-----------------------------------------------------------------------------
 static const char *Check(const char *name, DWORD flag, int i)
 {
-    switch(flag) {
+    switch (flag) {
         case VAR_FLAG_PWM:
-            if(Variables[i].usedFlags & ~(VAR_FLAG_RES | VAR_FLAG_PWM))
+            if (Variables[i].usedFlags & ~(VAR_FLAG_RES | VAR_FLAG_PWM))
                 return _("PWM: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_TOF:
-            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("TOF: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_TON:
-            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("TON: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_TCY:
-            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("TCY: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_RTO:
-            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("RTO: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_RTL:
-            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("RTL: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_THI:
-            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("THI: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_TLO:
-            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("TLO: variable can only be used for RES elsewhere");
             break;
 
@@ -457,53 +468,56 @@ static const char *Check(const char *name, DWORD flag, int i)
         case VAR_FLAG_CTU:
         case VAR_FLAG_CTD:
         case VAR_FLAG_CTC:
-        case VAR_FLAG_CTR:
+        case VAR_FLAG_CTR: {
             break;
+        }
 
         case VAR_FLAG_TABLE:
-            if(Variables[i].usedFlags & ~VAR_FLAG_TABLE)
+            if (Variables[i].usedFlags & ~VAR_FLAG_TABLE)
                 return _("TABLE: variable can be used only with TABLE");
             break;
 
         case VAR_FLAG_ANY:
-            if(Variables[i].usedFlags & VAR_FLAG_PWM)
+            if (Variables[i].usedFlags & VAR_FLAG_PWM)
                 return _("PWM: variable can only be used for RES elsewhere");
 
-            if(Variables[i].usedFlags & VAR_FLAG_TOF)
+            if (Variables[i].usedFlags & VAR_FLAG_TOF)
                 return _("TOF: variable can only be used for RES elsewhere");
 
-            if(Variables[i].usedFlags & VAR_FLAG_TON)
+            if (Variables[i].usedFlags & VAR_FLAG_TON)
                 return _("TON: variable can only be used for RES elsewhere");
 
-            if(Variables[i].usedFlags & VAR_FLAG_TCY)
+            if (Variables[i].usedFlags & VAR_FLAG_TCY)
                 return _("TCY: variable can only be used for RES elsewhere");
             /*
             if(Variables[i].usedFlags & VAR_FLAG_RTO)
                 return _("RTO: variable can only be used for RES elsewhere");
             */
-            if(Variables[i].usedFlags & VAR_FLAG_RTL)
+            if (Variables[i].usedFlags & VAR_FLAG_RTL)
                 return _("RTL: variable can only be used for RES elsewhere");
 
-            if(Variables[i].usedFlags & VAR_FLAG_THI)
+            if (Variables[i].usedFlags & VAR_FLAG_THI)
                 return _("THI: variable can only be used for RES elsewhere");
 
-            if(Variables[i].usedFlags & VAR_FLAG_TLO)
+            if (Variables[i].usedFlags & VAR_FLAG_TLO)
                 return _("TLO: variable can only be used for RES elsewhere");
 
             break;
 
         case VAR_FLAG_OTHERWISE_FORGOTTEN:
-            if((name[0] != '$')
-            && (name[0] != '#')) {
+            if ((name[0] != '$') && //
+                (name[0] != '#')) {
                 Error(_("Variable '%s' not assigned to, e.g. with a "
-                    "MOV statement, an ADD statement, etc.\r\n\r\n"
-                    "This is probably a programming error; now it "
-                    "will always be zero."), name);
+                        "MOV statement, an ADD statement, etc.\r\n\r\n"
+                        "This is probably a programming error; now it "
+                        "will always be zero."),
+                      name);
             }
             break;
 
-        default:
+        default: {
             oops();
+        }
     }
     return NULL;
 }
@@ -513,38 +527,40 @@ static const char *Check(const char *name, DWORD flag, int i)
 // (e.g. just a TON, an RTO with its reset, etc.). Returns NULL for success,
 // else an error string.
 //-----------------------------------------------------------------------------
-static const char *rungsUsed = ""; //local store var for message
+static const char *rungsUsed = ""; // local store var for message
 
 static const char *MarkUsedVariable(const char *name, DWORD flag)
 {
     int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
             break;
         }
     }
-    if(i >= MAX_IO) return "";
+    if (i >= MAX_IO)
+        return "";
 
-    if(i == VariableCount) {
+    if (i == VariableCount) {
         strcpy(Variables[i].name, name);
         Variables[i].usedFlags = 0;
         Variables[i].val = 0;
-        Variables[i].initedRung = -2; //rungNow;
-        strcpy(Variables[i].usedRungs,"");
+        Variables[i].initedRung = -2; // rungNow;
+        strcpy(Variables[i].usedRungs, "");
         VariableCount++;
     }
 
     char srungNow[MAX_NAME_LEN];
-    sprintf(srungNow,"%d ",rungNow+1);
-    if(!strstr(Variables[i].usedRungs, srungNow))
+    sprintf(srungNow, "%d ", rungNow + 1);
+    if (!strstr(Variables[i].usedRungs, srungNow))
         strcat(Variables[i].usedRungs, srungNow);
 
     rungsUsed = Variables[i].usedRungs;
 
     const char *s = Check(name, flag, i);
-    if(s) return s;
+    if (s)
+        return s;
 
-    if(Variables[i].initedRung < 0)
+    if (Variables[i].initedRung < 0)
         Variables[i].initedRung = rungNow;
     Variables[i].usedFlags |= flag;
     return NULL;
@@ -553,42 +569,48 @@ static const char *MarkUsedVariable(const char *name, DWORD flag)
 void MarkInitedVariable(char *name)
 {
     int i;
-    for(i = 0; i < VariableCount; i++) {
-        if(strcmp(Variables[i].name, name)==0) {
+    for (i = 0; i < VariableCount; i++) {
+        if (strcmp(Variables[i].name, name) == 0) {
             break;
         }
     }
-    if(i >= MAX_IO) oops();
+    if (i >= MAX_IO)
+        oops();
 
-    if(i == VariableCount) {
+    if (i == VariableCount) {
         strcpy(Variables[i].name, name);
         Variables[i].usedFlags = 0;
         Variables[i].val = 0;
-        Variables[i].initedRung = -2; //rungNow;
-        //Variables[i].initedOp = opNow;
-        strcpy(Variables[i].usedRungs,"");
+        Variables[i].initedRung = -2; // rungNow;
+        // Variables[i].initedOp = opNow;
+        strcpy(Variables[i].usedRungs, "");
         VariableCount++;
     }
-    if(Variables[i].initedRung < 0)
+    if (Variables[i].initedRung < 0)
         Variables[i].initedRung = rungNow;
 }
 
 //-----------------------------------------------------------------------------
 static void CheckMsg(const char *name, const char *s, int i)
 {
-    if(s) {
-        #if 1
-        Error(_("Rung %d: Variable '%s' incorrectly assigned.\n%s.\nSee rungs:%s"), rungNow+1, name, s, rungsUsed);
-        #else
+    if (s) {
+#if 1
+        Error(_("Rung %d: Variable '%s' incorrectly assigned.\n%s.\nSee "
+                "rungs:%s"),
+              rungNow + 1, name, s, rungsUsed);
+#else
         char s2[1000];
-        sprintf(s2,_("Rung %d: Variable '%s' incorrectly assigned.\n%s.\nSee rungs:%s"), rungNow+1, name, s, rungsUsed);
-        if(i>=0) {
-          char s3[1000];
-          sprintf(s3,_("Inited in Rung %d"), Variables[i].initedRung+1);
-          Error("%s %s", s2, s3);
+        sprintf(s2,
+                _("Rung %d: Variable '%s' incorrectly assigned.\n%s.\nSee "
+                  "rungs:%s"),
+                rungNow + 1, name, s, rungsUsed);
+        if (i >= 0) {
+            char s3[1000];
+            sprintf(s3, _("Inited in Rung %d"), Variables[i].initedRung + 1);
+            Error("%s %s", s2, s3);
         } else
-          Error(s2);
-        #endif
+            Error(s2);
+#endif
     }
 }
 //-----------------------------------------------------------------------------
@@ -606,27 +628,27 @@ static void MarkWithCheck(const char *name, int flag)
 static void CheckVariableNamesCircuit(int which, void *elem)
 {
     ElemLeaf *l = (ElemLeaf *)elem;
-    char *name = NULL;
-    DWORD flag;
-    char str[MAX_NAME_LEN];
+    char *    name = NULL;
+    DWORD     flag;
+    char      str[MAX_NAME_LEN];
 
-    switch(which) {
+    switch (which) {
         case ELEM_SERIES_SUBCKT: {
-            int i;
+            int               i;
             ElemSubcktSeries *s = (ElemSubcktSeries *)elem;
-            for(i = 0; i < s->count; i++) {
+            for (i = 0; i < s->count; i++) {
                 CheckVariableNamesCircuit(s->contents[i].which,
-                    s->contents[i].data.any);
+                                          s->contents[i].data.any);
             }
             break;
         }
 
         case ELEM_PARALLEL_SUBCKT: {
-            int i;
+            int                 i;
             ElemSubcktParallel *p = (ElemSubcktParallel *)elem;
-            for(i = 0; i < p->count; i++) {
+            for (i = 0; i < p->count; i++) {
                 CheckVariableNamesCircuit(p->contents[i].which,
-                    p->contents[i].data.any);
+                                          p->contents[i].data.any);
             }
             break;
         }
@@ -638,21 +660,22 @@ static void CheckVariableNamesCircuit(int which, void *elem)
         case ELEM_TCY:
         case ELEM_THI:
         case ELEM_TLO:
-            if(which == ELEM_RTO)
+            if (which == ELEM_RTO)
                 flag = VAR_FLAG_RTO;
-            else if(which == ELEM_RTL)
+            else if (which == ELEM_RTL)
                 flag = VAR_FLAG_RTL;
-            else if(which == ELEM_TOF)
+            else if (which == ELEM_TOF)
                 flag = VAR_FLAG_TOF;
-            else if(which == ELEM_TON)
+            else if (which == ELEM_TON)
                 flag = VAR_FLAG_TON;
-            else if(which == ELEM_TCY)
+            else if (which == ELEM_TCY)
                 flag = VAR_FLAG_TCY;
-            else if(which == ELEM_THI)
+            else if (which == ELEM_THI)
                 flag = VAR_FLAG_THI;
-            else if(which == ELEM_TLO)
+            else if (which == ELEM_TLO)
                 flag = VAR_FLAG_TLO;
-            else oops();
+            else
+                oops();
 
             MarkWithCheck(l->d.timer.name, flag);
 
@@ -662,89 +685,93 @@ static void CheckVariableNamesCircuit(int which, void *elem)
         case ELEM_CTD:
         case ELEM_CTC:
         case ELEM_CTR:
-            if(which == ELEM_CTU)
+            if (which == ELEM_CTU)
                 flag = VAR_FLAG_CTU;
-            else if(which == ELEM_CTD)
+            else if (which == ELEM_CTD)
                 flag = VAR_FLAG_CTD;
-            else if(which == ELEM_CTC)
+            else if (which == ELEM_CTC)
                 flag = VAR_FLAG_CTC;
-            else if(which == ELEM_CTR)
+            else if (which == ELEM_CTR)
                 flag = VAR_FLAG_CTR;
-            else oops();
+            else
+                oops();
 
             MarkWithCheck(l->d.counter.name, flag);
 
             break;
 
-        case ELEM_SET_PWM:
+        case ELEM_SET_PWM: {
             MarkWithCheck(l->d.setPwm.name, VAR_FLAG_PWM);
             break;
-
-        case ELEM_RES:
+        }
+        case ELEM_RES: {
             MarkWithCheck(l->d.reset.name, VAR_FLAG_RES);
             break;
-
+        }
         case ELEM_TIME2DELAY:
         case ELEM_TIME2COUNT:
-        case ELEM_MOVE:
+        case ELEM_MOVE: {
             MarkWithCheck(l->d.move.dest, VAR_FLAG_ANY);
             break;
-
+        }
         case ELEM_GOTO:
         case ELEM_GOSUB:
         case ELEM_LABEL:
         case ELEM_SUBPROG:
-        case ELEM_ENDSUB:
+        case ELEM_ENDSUB: {
             MarkWithCheck(l->d.doGoto.rung, VAR_FLAG_ANY);
             break;
-
-        case ELEM_RETURN:
+        }
+        case ELEM_RETURN: {
             break;
-
+        }
         case ELEM_NPULSE_OFF:
-        //case ELEM_PWM_OFF:
+            // case ELEM_PWM_OFF:
             break;
 
         case ELEM_QUAD_ENCOD:
         case ELEM_NPULSE:
         case ELEM_PULSER:
-        case ELEM_STEPPER:
+        case ELEM_STEPPER: {
             break;
-
+        }
         case ELEM_BIN2BCD:
         case ELEM_BCD2BIN:
         case ELEM_SWAP:
         case ELEM_OPPOSITE:
-        case ELEM_BUS:
+        case ELEM_BUS: {
             MarkWithCheck(l->d.move.dest, VAR_FLAG_ANY);
             break;
-
+        }
+            // clang-format off
         const char *s;
-        case ELEM_7SEG:  s = "char7seg"; goto xseg;
-        case ELEM_9SEG:  s = "char9seg"; goto xseg;
+        case ELEM_7SEG:  s = "char7seg";  goto xseg;
+        case ELEM_9SEG:  s = "char9seg";  goto xseg;
         case ELEM_14SEG: s = "char14seg"; goto xseg;
         case ELEM_16SEG: s = "char16seg"; goto xseg;
         xseg:
+            // clang-format on
             MarkWithCheck(s, VAR_FLAG_ANY);
             MarkWithCheck(l->d.segments.dest, VAR_FLAG_ANY);
-            if(!IsNumber(l->d.segments.src))
-              MarkWithCheck(l->d.segments.src, VAR_FLAG_ANY);
+            if (!IsNumber(l->d.segments.src))
+                MarkWithCheck(l->d.segments.src, VAR_FLAG_ANY);
             break;
 
         case ELEM_LOOK_UP_TABLE:
-            sprintf(str, "%s%s", l->d.lookUpTable.name,""); // "LutElement");
+            sprintf(str, "%s%s", l->d.lookUpTable.name, ""); // "LutElement");
             MarkWithCheck(str, VAR_FLAG_TABLE);
             MarkWithCheck(l->d.lookUpTable.dest, VAR_FLAG_ANY);
-            if(!IsNumber(l->d.lookUpTable.index))
-              MarkWithCheck(l->d.lookUpTable.index, VAR_FLAG_ANY);
+            if (!IsNumber(l->d.lookUpTable.index))
+                MarkWithCheck(l->d.lookUpTable.index, VAR_FLAG_ANY);
             break;
 
         case ELEM_PIECEWISE_LINEAR:
-            sprintf(str, "%s%s", l->d.piecewiseLinear.name,""); // "LutElement");
+            sprintf(str, "%s%s", l->d.piecewiseLinear.name, "");
             MarkWithCheck(str, VAR_FLAG_TABLE);
             MarkWithCheck(l->d.piecewiseLinear.dest, VAR_FLAG_ANY);
-            if(!IsNumber(l->d.lookUpTable.index))
-              MarkWithCheck(l->d.lookUpTable.index, VAR_FLAG_ANY); // not tested
+            if (!IsNumber(l->d.lookUpTable.index))
+                MarkWithCheck(l->d.lookUpTable.index,
+                              VAR_FLAG_ANY); // not tested
             break;
 
         case ELEM_READ_ADC:
@@ -766,14 +793,14 @@ static void CheckVariableNamesCircuit(int which, void *elem)
         case ELEM_IF_BIT_SET:
         case ELEM_IF_BIT_CLEAR:
         case ELEM_AND:
-        case ELEM_OR :
+        case ELEM_OR:
         case ELEM_XOR:
         case ELEM_NOT:
         case ELEM_NEG:
-        case ELEM_RANDOM:
+        case ELEM_RANDOM: {
             MarkWithCheck(l->d.math.dest, VAR_FLAG_ANY);
             break;
-
+        }
         case ELEM_UART_RECV:
         case ELEM_UART_RECVn:
             MarkWithCheck(l->d.uart.name, VAR_FLAG_ANY);
@@ -781,8 +808,8 @@ static void CheckVariableNamesCircuit(int which, void *elem)
 
         case ELEM_SHIFT_REGISTER: {
             int i;
-            for(i = 1; i < l->d.shiftRegister.stages; i++) {
-                char str[MAX_NAME_LEN+10];
+            for (i = 1; i < l->d.shiftRegister.stages; i++) {
+                char str[MAX_NAME_LEN + 10];
                 sprintf(str, "%s%d", l->d.shiftRegister.name, i);
                 MarkWithCheck(str, VAR_FLAG_ANY);
             }
@@ -820,24 +847,25 @@ static void CheckVariableNamesCircuit(int which, void *elem)
         case ELEM_GEQ:
         case ELEM_LES:
         case ELEM_LEQ:
-        #ifdef USE_SFR
+#ifdef USE_SFR
         case ELEM_RSFR:
         case ELEM_WSFR:
         case ELEM_SSFR:
         case ELEM_CSFR:
         case ELEM_TSFR:
-        #endif
+#endif
             break;
 
-        default:
+        default: {
             ooops("ELEM_0x%X", which);
+        }
     }
 }
 //-----------------------------------------------------------------------------
 void CheckVariableNames(void)
 {
     int i;
-    for(i = 0; i < Prog.numRungs; i++) {
+    for (i = 0; i < Prog.numRungs; i++) {
         rungNow = i; // Ok
         CheckVariableNamesCircuit(ELEM_SERIES_SUBCKT, Prog.rungs[i]);
     }

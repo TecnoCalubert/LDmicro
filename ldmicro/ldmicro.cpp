@@ -31,40 +31,41 @@
 #include "mcutable.h"
 #include "intcode.h"
 
-HINSTANCE   Instance;
-HWND        MainWindow;
-HDC         Hdc;
+HINSTANCE Instance;
+HWND      MainWindow;
+HDC       Hdc;
 
 // parameters used to capture the mouse when implementing our totally non-
 // general splitter control
-static HHOOK       MouseHookHandle;
-static int         MouseY;
+static HHOOK MouseHookHandle;
+static int   MouseY;
 
 // For the open/save dialog boxes
-#define LDMICRO_PATTERN "LDmicro Ladder Logic Programs (*.ld)\0*.ld\0" \
-                     "All files\0*\0\0"
+#define LDMICRO_PATTERN                                                        \
+    "LDmicro Ladder Logic Programs (*.ld)\0*.ld\0"                             \
+    "All files\0*\0\0"
 
 BOOL ProgramChangedNotSaved = FALSE;
 
 ULONGLONG PrevWriteTime = 0;
 ULONGLONG LastWriteTime = 0;
 
-#define HEX_PATTERN  "Intel Hex Files (*.hex)\0*.hex\0All files\0*\0\0"
+#define HEX_PATTERN "Intel Hex Files (*.hex)\0*.hex\0All files\0*\0\0"
 #define C_PATTERN "C Source Files (*.c)\0*.c\0All Files\0*\0\0"
-#define INTERPRETED_PATTERN \
+#define INTERPRETED_PATTERN                                                    \
     "Interpretable Byte Code Files (*.int)\0*.int\0All Files\0*\0\0"
 #define PASCAL_PATTERN "PASCAL Source Files (*.pas)\0*.pas\0All Files\0*\0\0"
-#define ARDUINO_C_PATTERN "ARDUINO C Source Files (*.cpp)\0*.cpp\0All Files\0*\0\0"
-#define XINT_PATTERN \
+#define ARDUINO_C_PATTERN                                                      \
+    "ARDUINO C Source Files (*.cpp)\0*.cpp\0All Files\0*\0\0"
+#define XINT_PATTERN                                                           \
     "Extended Byte Code Files (*.xint)\0*.xint\0All Files\0*\0\0"
+#define TXT_PATTERN "Text Files (*.txt)\0*.txt\0All files\0*\0\0"
 
 char ExePath[MAX_PATH];
 char CurrentSaveFile[MAX_PATH]; // .ld
 char CurrentLdPath[MAX_PATH];
 char CurrentCompileFile[MAX_PATH]; //.hex, .asm, ...
 char CurrentCompilePath[MAX_PATH];
-
-#define TXT_PATTERN  "Text Files (*.txt)\0*.txt\0All files\0*\0\0"
 
 // Everything relating to the PLC's program, I/O configuration, processor
 // choice, and so on--basically everything that would be saved in the
@@ -88,10 +89,10 @@ static BOOL SaveAsDialog(void)
     ofn.nMaxFile = sizeof(CurrentSaveFile);
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
 
-    if(!GetSaveFileName(&ofn))
+    if (!GetSaveFileName(&ofn))
         return FALSE;
 
-    if(!SaveProjectToFile(CurrentSaveFile, MNU_SAVE)) {
+    if (!SaveProjectToFile(CurrentSaveFile, MNU_SAVE)) {
         Error(_("Couldn't write to '%s'."), CurrentSaveFile);
         return FALSE;
     } else {
@@ -106,9 +107,9 @@ static BOOL SaveAsDialog(void)
 char *ExtractFileDir(char *dest) // without last backslash
 {
     char *c;
-    if(strlen(dest)) {
-        c = strrchr(dest,'\\');
-        if(c)
+    if (strlen(dest)) {
+        c = strrchr(dest, '\\');
+        if (c)
             *c = '\0';
     };
     return dest;
@@ -117,9 +118,9 @@ char *ExtractFileDir(char *dest) // without last backslash
 char *ExtractFilePath(char *dest) // with last backslash
 {
     char *c;
-    if(strlen(dest)) {
-        c = strrchr(dest,'\\');
-        if(c)
+    if (strlen(dest)) {
+        c = strrchr(dest, '\\');
+        if (c)
             c[1] = '\0';
     };
     return dest;
@@ -129,9 +130,9 @@ char *ExtractFilePath(char *dest) // with last backslash
 char *ExtractFileName(char *src) // with .ext
 {
     char *c;
-    if(strlen(src)) {
-        c = strrchr(src,'\\');
-        if(c)
+    if (strlen(src)) {
+        c = strrchr(src, '\\');
+        if (c)
             return &c[1];
     }
     return src;
@@ -143,9 +144,9 @@ char *GetFileName(char *dest, char *src) // without .ext
     dest[0] = '\0';
     char *c;
     strcpy(dest, ExtractFileName(src));
-    if(strlen(dest)) {
-        c = strrchr(dest,'.');
-        if(c)
+    if (strlen(dest)) {
+        c = strrchr(dest, '.');
+        if (c)
             c[0] = '\0';
     }
     return dest;
@@ -155,19 +156,19 @@ char *GetFileName(char *dest, char *src) // without .ext
 char *SetExt(char *dest, const char *src, const char *ext)
 {
     char *c;
-    if(dest != src)
-      if(strlen(src))
-        strcpy(dest, src);
-    if(strlen(dest)) {
-        c = strrchr(dest,'.');
-        if(c)
+    if (dest != src)
+        if (strlen(src))
+            strcpy(dest, src);
+    if (strlen(dest)) {
+        c = strrchr(dest, '.');
+        if (c)
             c[0] = '\0';
     };
-    if(!strlen(dest))
+    if (!strlen(dest))
         strcat(dest, "new");
 
-    if(strlen(ext))
-        if(!strchr(ext,'.'))
+    if (strlen(ext))
+        if (!strchr(ext, '.'))
             strcat(dest, ".");
 
     return strcat(dest, ext);
@@ -179,7 +180,7 @@ char *SetExt(char *dest, const char *src, const char *ext)
 //-----------------------------------------------------------------------------
 static BOOL ExportDialog(void)
 {
-    char exportFile[MAX_PATH];
+    char         exportFile[MAX_PATH];
     OPENFILENAME ofn;
 
     exportFile[0] = '\0';
@@ -194,7 +195,7 @@ static BOOL ExportDialog(void)
     ofn.nMaxFile = sizeof(exportFile);
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
 
-    if(!GetSaveFileName(&ofn))
+    if (!GetSaveFileName(&ofn))
         return FALSE;
 
     ExportDrawingAsText(exportFile);
@@ -207,8 +208,8 @@ static BOOL ExportDialog(void)
 //-----------------------------------------------------------------------------
 static BOOL SaveProgram(int code)
 {
-    if(strlen(CurrentSaveFile)) {
-        if(!SaveProjectToFile(CurrentSaveFile, code)) {
+    if (strlen(CurrentSaveFile)) {
+        if (!SaveProjectToFile(CurrentSaveFile, code)) {
             Error(_("Couldn't write to '%s'."), CurrentSaveFile);
             return FALSE;
         } else {
@@ -224,7 +225,7 @@ static BOOL SaveProgram(int code)
 //-----------------------------------------------------------------------------
 bool ExistFile(const char *name)
 {
-    if(FILE *file = fopen(name, "r")) {
+    if (FILE *file = fopen(name, "r")) {
         fclose(file);
         return TRUE;
     }
@@ -263,22 +264,22 @@ bool exists_test3 (const char *name) {
 //-----------------------------------------------------------------------------
 long int fsize(FILE *fp)
 {
-    long int prev=ftell(fp);
+    long int prev = ftell(fp);
     fseek(fp, 0L, SEEK_END);
-    long int sz=ftell(fp);
-    fseek(fp,prev,SEEK_SET); //go back to where we were
+    long int sz = ftell(fp);
+    fseek(fp, prev, SEEK_SET); // go back to where we were
     return sz;
 }
 
 long int fsize(char *filename)
 {
     FILE *fp;
-    fp=fopen(filename,"rb");
-    if(fp==NULL) {
+    fp = fopen(filename, "rb");
+    if (fp == NULL) {
         return 0;
     }
     fseek(fp, 0L, SEEK_END);
-    long int sz=ftell(fp);
+    long int sz = ftell(fp);
     fclose(fp);
     return sz;
 }
@@ -286,28 +287,31 @@ long int fsize(char *filename)
 //-----------------------------------------------------------------------------
 static void isErr(int Err, char *r)
 {
-  const char *s;
-  switch(Err){
-    case 0:s="The system is out of memory or resources"; break;
-    case ERROR_BAD_FORMAT:s="The .exe file is invalid"; break;
-    case ERROR_FILE_NOT_FOUND:s="The specified file was not found"; break;
-    case ERROR_PATH_NOT_FOUND:s="The specified path was not found"; break;
-    default:s=""; break;
-  }
-  if(strlen(s))
-      Error("Error: %d - %s in command line:\n\n%s",Err, s, r);
+    const char *s;
+    switch (Err) {
+        // clang-format off
+        case 0:                    s = "The system is out of memory or resources"; break;
+        case ERROR_BAD_FORMAT:     s = "The .exe file is invalid";                 break;
+        case ERROR_FILE_NOT_FOUND: s = "The specified file was not found";         break;
+        case ERROR_PATH_NOT_FOUND: s = "The specified path was not found";         break;
+        default:                   s = "";                                         break;
+            // clang-format on
+    }
+    if (strlen(s))
+        Error("Error: %d - %s in command line:\n\n%s", Err, s, r);
 }
 
 //-----------------------------------------------------------------------------
 static int Execute(char *r)
 {
-   return WinExec(r, SW_SHOWNORMAL/* | SW_SHOWMINIMIZED*/);
+    return WinExec(r, SW_SHOWNORMAL /* | SW_SHOWMINIMIZED*/);
 }
 
 //-----------------------------------------------------------------------------
 char *GetIsaName(int ISA)
 {
-    switch(ISA) {
+    switch (ISA) {
+        // clang-format off
         case ISA_AVR          : return (char *)stringer( ISA_AVR          ) + 4;
         case ISA_PIC16        : return (char *)stringer( ISA_PIC16        ) + 4;
       //case ISA_ANSIC        : return (char *)stringer( ISA_ANSIC        ) + 4;
@@ -318,13 +322,15 @@ char *GetIsaName(int ISA)
       //case ISA_ARDUINO      : return (char *)stringer( ISA_ARDUINO      ) + 4;
       //case ISA_CAVR         : return (char *)stringer( ISA_CAVR         ) + 4;
         default               : oops(); return NULL;
+            // clang-format on
     }
 }
 
 //-----------------------------------------------------------------------------
 const char *GetMnuName(int MNU)
 {
-    switch(MNU) {
+    switch (MNU) {
+        // clang-format off
         case MNU_COMPILE_ANSIC         : return (char *)stringer(MNU_COMPILE_ANSIC) + 12;
         case MNU_COMPILE_HI_TECH_C     : return (char *)stringer(MNU_COMPILE_HI_TECH_C) + 12;
         case MNU_COMPILE_CCS_PIC_C     : return (char *)stringer(MNU_COMPILE_CCS_PIC_C) + 12;
@@ -334,12 +340,14 @@ const char *GetMnuName(int MNU)
         case MNU_COMPILE_IAR           : return (char *)stringer(MNU_COMPILE_IAR) + 12;
         case MNU_COMPILE_ARDUINO       : return (char *)stringer(MNU_COMPILE_ARDUINO) + 12;
         default                        : return "";
+            // clang-format on
     }
 }
 
 //-----------------------------------------------------------------------------
 int GetMnu(char *MNU_name)
 {
+    // clang-format off
     if(!strlen(MNU_name)) return -1;
     if(strstr("MNU_COMPILE_ANSIC",         MNU_name)) return MNU_COMPILE_ANSIC;
     if(strstr("MNU_COMPILE_HI_TECH_C",     MNU_name)) return MNU_COMPILE_HI_TECH_C;
@@ -347,6 +355,7 @@ int GetMnu(char *MNU_name)
     if(strstr("MNU_COMPILE_GNUC",          MNU_name)) return MNU_COMPILE_GNUC;
     if(strstr("MNU_COMPILE_CODEVISIONAVR", MNU_name)) return MNU_COMPILE_CODEVISIONAVR;
     if(strstr("MNU_COMPILE_ARDUINO",       MNU_name)) return MNU_COMPILE_ARDUINO;
+    // clang-format on
     return -1;
 }
 
@@ -355,14 +364,14 @@ static void flashBat(char *name, int ISA)
 {
     char s[MAX_PATH];
     char r[MAX_PATH];
-    if(strlen(name) == 0) {
+    if (strlen(name) == 0) {
         Error(_(" Save ld before flash."));
         return;
     }
 
     s[0] = '\0';
     SetExt(s, name, "");
-    sprintf(r,"\"%sflashMcu.bat\" %s \"%s\"",ExePath,GetIsaName(ISA),s);
+    sprintf(r, "\"%sflashMcu.bat\" %s \"%s\"", ExePath, GetIsaName(ISA), s);
 
     isErr(Execute(r), r);
 }
@@ -372,13 +381,13 @@ static void readBat(const char *name, int ISA)
 {
     char s[MAX_PATH];
     char r[MAX_PATH];
-    if(strlen(name) == 0) {
+    if (strlen(name) == 0) {
         name = "read";
     }
 
     s[0] = '\0';
     SetExt(s, name, "");
-    sprintf(r,"\"%sreadMcu.bat\" %s \"%s\"",ExePath,GetIsaName(ISA),s);
+    sprintf(r, "\"%sreadMcu.bat\" %s \"%s\"", ExePath, GetIsaName(ISA), s);
 
     isErr(Execute(r), r);
 }
@@ -386,13 +395,13 @@ static void readBat(const char *name, int ISA)
 //-----------------------------------------------------------------------------
 static void notepad(const char *path, const char *name, const char *ext)
 {
-    char s[MAX_PATH]="";
-    char r[MAX_PATH]="";
+    char s[MAX_PATH] = "";
+    char r[MAX_PATH] = "";
 
     r[0] = '\0';
-    if(path && strlen(path)) {
+    if (path && strlen(path)) {
         strcpy(r, path);
-        if(path[strlen(path) - 1] != '\\')
+        if (path[strlen(path) - 1] != '\\')
             strcat(r, "\\");
     }
     strcat(r, name);
@@ -400,11 +409,11 @@ static void notepad(const char *path, const char *name, const char *ext)
     s[0] = '\0';
     SetExt(s, r, ext);
 
-    if(!ExistFile(s)) {
+    if (!ExistFile(s)) {
         Error("File not exist: '%s'", s);
         return;
     }
-    sprintf(r,"\"%snotepad.bat\" \"%s\"",ExePath,s);
+    sprintf(r, "\"%snotepad.bat\" \"%s\"", ExePath, s);
     isErr(Execute(r), r);
 }
 
@@ -426,21 +435,19 @@ static void clearBat()
 
     char r[MAX_PATH];
 
-    sprintf(r,"%sclear.bat", ExePath);
-    dbps(r)
-    if(!ExistFile(r))
+    sprintf(r, "%sclear.bat", ExePath);
+    if (!ExistFile(r)) 
         return;
 
-    sprintf(r,"\"%sclear.bat\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"", ExePath,
-      CurrentLdPath, LdName, CurrentCompilePath, CompileName);
-    dbps(r)
+    sprintf(r, "\"%sclear.bat\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"", ExePath,
+            CurrentLdPath, LdName, CurrentCompilePath, CompileName);
     isErr(Execute(r), r);
 }
 
 //-----------------------------------------------------------------------------
 static void postCompile(const char *MNU)
 {
-    if(!ExistFile(CurrentCompileFile))
+    if (!ExistFile(CurrentCompileFile))
         return;
 
     char LdName[MAX_PATH];
@@ -449,19 +456,19 @@ static void postCompile(const char *MNU)
 
     char outFile[MAX_PATH];
 
-    if(!fsize(CurrentCompileFile)) {
+    if (!fsize(CurrentCompileFile)) {
         remove(CurrentCompileFile);
-        if(strstr(CurrentCompileFile,".hex")) {
+        if (strstr(CurrentCompileFile, ".hex")) {
             sprintf(outFile, "%s%s%s", CurrentCompilePath, LdName, ".asm");
             remove(outFile);
         }
-        if(strstr(CurrentCompileFile,".c")) {
+        if (strstr(CurrentCompileFile, ".c")) {
             sprintf(outFile, "%s%s%s", CurrentCompilePath, LdName, ".h");
             remove(outFile);
             sprintf(outFile, "%s%s", CurrentCompilePath, "ladder.h_");
             remove(outFile);
         }
-        if(strstr(CurrentCompileFile,".cpp")) {
+        if (strstr(CurrentCompileFile, ".cpp")) {
             sprintf(outFile, "%s%s%s", CurrentCompilePath, LdName, ".h");
             remove(outFile);
             sprintf(outFile, "%s%s%s", CurrentCompilePath, LdName, ".ino_");
@@ -474,15 +481,16 @@ static void postCompile(const char *MNU)
 
     char r[MAX_PATH];
 
-    sprintf(r,"%spostCompile.bat", ExePath);
-    if(!ExistFile(r))
+    sprintf(r, "%spostCompile.bat", ExePath);
+    if (!ExistFile(r))
         return;
 
     const char *ISA = "_NULL_";
-    if(Prog.mcu)
+    if (Prog.mcu)
         ISA = GetIsaName(Prog.mcu->whichIsa);
 
-    sprintf(r,"\"%spostCompile.bat\" %s %s \"%s\" \"%s\"", ExePath, MNU, ISA, CurrentCompilePath, LdName);
+    sprintf(r, "\"%spostCompile.bat\" %s %s \"%s\" \"%s\"", ExePath, MNU, ISA,
+            CurrentCompilePath, LdName);
     isErr(Execute(r), r);
 }
 
@@ -492,44 +500,48 @@ static void postCompile(const char *MNU)
 //-----------------------------------------------------------------------------
 static void CompileProgram(BOOL compileAs, int MNU)
 {
-    if((MNU == MNU_COMPILE) && (compile_MNU > 0))
+    if ((MNU == MNU_COMPILE) && (compile_MNU > 0))
         MNU = compile_MNU;
 
-    if(MNU == MNU_COMPILE_ARDUINO) {
+    if (MNU == MNU_COMPILE_ARDUINO) {
         char onlyName[MAX_PATH];
         strcpy(onlyName, ExtractFileName(CurrentSaveFile));
         SetExt(onlyName, onlyName, "");
 
-        if(strchr(onlyName, ' ')) {
+        if (strchr(onlyName, ' ')) {
             strcpy(CurrentCompileFile, "");
             ProgramChangedNotSaved = TRUE;
-            Error(_("ARDUINO: Space ' ' not allowed in '%s'\nRename file!"), CurrentSaveFile);
+            Error(_("ARDUINO: Space ' ' not allowed in '%s'\nRename file!"),
+                  CurrentSaveFile);
             return;
         }
-        if(strchr(onlyName, '.')) {
+        if (strchr(onlyName, '.')) {
             strcpy(CurrentCompileFile, "");
             ProgramChangedNotSaved = TRUE;
-            Error(_("ARDUINO: Dot '.' not allowed in '%s'\nRename file!"), CurrentSaveFile);
+            Error(_("ARDUINO: Dot '.' not allowed in '%s'\nRename file!"),
+                  CurrentSaveFile);
             return;
         }
-        if(IsNumber(onlyName)) {
+        if (IsNumber(onlyName)) {
             strcpy(CurrentCompileFile, "");
             ProgramChangedNotSaved = TRUE;
-            Error(_("ARDUINO: The leading digit '%c' not allowed at the beginning in '%s.ld'\nRename file!"), onlyName[0], onlyName);
+            Error(_("ARDUINO: The leading digit '%c' not allowed at the "
+                    "beginning in '%s.ld'\nRename file!"),
+                  onlyName[0], onlyName);
             return;
         }
 
         strcpy(onlyName, ExtractFileName(CurrentCompileFile));
         SetExt(onlyName, onlyName, "");
-        if(strchr(onlyName, ' ')) {
+        if (strchr(onlyName, ' ')) {
             strcpy(CurrentCompileFile, "");
             ProgramChangedNotSaved = TRUE;
         }
-        if(strchr(onlyName, '.')) {
+        if (strchr(onlyName, '.')) {
             strcpy(CurrentCompileFile, "");
             ProgramChangedNotSaved = TRUE;
         }
-        if(IsNumber(onlyName)) {
+        if (IsNumber(onlyName)) {
             strcpy(CurrentCompileFile, "");
             ProgramChangedNotSaved = TRUE;
         }
@@ -2589,28 +2601,28 @@ void KxStackTrace()
 //-----------------------------------------------------------------------------
 void CheckPwmPins()
 {
-return;
-    int i,j;
-    for(i = 0; i < NUM_SUPPORTED_MCUS ; i++) {
-       for(j = 0; j < SupportedMcus[i].pwmCount ; j++) {
-           if(!SupportedMcus[i].pwmNeedsPin && SupportedMcus[i].pwmCount) {
-               ooops("1 %s", SupportedMcus[i].mcuName)
-           }
-           else if(SupportedMcus[i].pwmNeedsPin)
-               if(SupportedMcus[i].pwmNeedsPin == SupportedMcus[i].pwmInfo[j].pin)
+    return;
+    int i, j;
+    for (i = 0; i < NUM_SUPPORTED_MCUS; i++) {
+        for (j = 0; j < SupportedMcus[i].pwmCount; j++) {
+            if (!SupportedMcus[i].pwmNeedsPin && SupportedMcus[i].pwmCount) {
+                ooops("1 %s", SupportedMcus[i].mcuName)
+            } else if (SupportedMcus[i].pwmNeedsPin)
+                if (SupportedMcus[i].pwmNeedsPin ==
+                    SupportedMcus[i].pwmInfo[j].pin)
                     break;
-       }
-       if(SupportedMcus[i].pwmCount)
-           if(j >= SupportedMcus[i].pwmCount)
-               ooops("2 %s", SupportedMcus[i].mcuName)
-       }
+        }
+        if (SupportedMcus[i].pwmCount)
+            if (j >= SupportedMcus[i].pwmCount)
+                ooops("2 %s", SupportedMcus[i].mcuName)
+    }
 }
 
 //-----------------------------------------------------------------------------
 // Entry point into the program.
 //-----------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-    LPSTR lpCmdLine, INT nCmdShow)
+                   LPSTR lpCmdLine, INT nCmdShow)
 {
     if(NUM_SUPPORTED_MCUS != arraylen(SupportedMcus)) {
         Error("NUM_SUPPORTED_MCUS=%d != arraylen(SupportedMcus)=%d", NUM_SUPPORTED_MCUS, arraylen(SupportedMcus));

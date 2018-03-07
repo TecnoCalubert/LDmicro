@@ -55,7 +55,8 @@ PlcCursor Cursor;
 //-----------------------------------------------------------------------------
 BOOL FindSelected(int *gx, int *gy)
 {
-    if(!Selected) return FALSE;
+    if(!Selected)
+        return FALSE;
     int i, j;
     for(i = 0; i < DISPLAY_MATRIX_X_SIZE; i++) {
         for(j = 0; j < DISPLAY_MATRIX_Y_SIZE; j++) {
@@ -86,7 +87,8 @@ void SelectElement(int gx, int gy, int state)
         }
     }
 
-    if(Selected) Selected->selectedState = SELECTED_NONE;
+    if(Selected)
+        Selected->selectedState = SELECTED_NONE;
 
     Selected = DisplayMatrix[gx][gy];
     SelectedWhich = DisplayMatrixWhich[gx][gy];
@@ -113,7 +115,8 @@ void SelectElement(int gx, int gy, int state)
     }
 
     ok();
-    if(Selected) Selected->selectedState = state;
+    if(Selected)
+        Selected->selectedState = state;
     ok();
 
     WhatCanWeDoFromCursorAndTopology();
@@ -239,8 +242,10 @@ void WhatCanWeDoFromCursorAndTopology(void)
 
     int i = RungContainingSelected();
     if(i >= 0) {
-        if(i == 0) canPushUp = FALSE;
-        if(i == (Prog.numRungs-1)) canPushDown = FALSE;
+        if(i == 0)
+            canPushUp = FALSE;
+        if(i == (Prog.numRungs - 1))
+            canPushDown = FALSE;
 
         if(Prog.rungs[i]->count == 1 &&
             Prog.rungs[i]->contents[0].which == ELEM_PLACEHOLDER)
@@ -252,8 +257,7 @@ void WhatCanWeDoFromCursorAndTopology(void)
     CanInsertEnd = FALSE;
     CanInsertOther = TRUE;
 
-    if(Selected && EndOfRungElem(SelectedWhich))
-    {
+    if(Selected && EndOfRungElem(SelectedWhich)) {
         if(SelectedWhich == ELEM_COIL) {
             canNegate = TRUE;
             canNormal = TRUE;
@@ -300,8 +304,8 @@ void WhatCanWeDoFromCursorAndTopology(void)
 */
           CanInsertComment = FALSE;
     }
-    SetMenusEnabled(canNegate, canNormal, canResetOnly, canSetOnly, canDelete,
-        CanInsertEnd, CanInsertOther, canPushDown, canPushUp, CanInsertComment);
+    SetMenusEnabled(canNegate, canNormal, canResetOnly, canSetOnly, canDelete, CanInsertEnd, CanInsertOther,
+                    canPushDown, canPushUp, CanInsertComment);
 }
 
 //-----------------------------------------------------------------------------
@@ -351,9 +355,7 @@ BOOL MoveCursorTopLeft(void)
     // cursor in a position that would force us to scroll to put it in to
     // view.)
     for(i = 0; i < DISPLAY_MATRIX_X_SIZE; i++) {
-        for(j = ScrollYOffset;
-            j < DISPLAY_MATRIX_Y_SIZE && j < (ScrollYOffset+16); j++)
-        {
+        for(j = ScrollYOffset; j < DISPLAY_MATRIX_Y_SIZE && j < (ScrollYOffset + 16); j++) {
             if(VALID_LEAF(DisplayMatrix[i][j])) {
                 SelectElement(i, j, SELECTED_LEFT);
                 return TRUE;
@@ -396,13 +398,12 @@ void MoveCursorKeyboard(int keyCode)
                 SelectElement(-1, -1, SELECTED_LEFT);
                 break;
             }
-            if(SelectedWhich == ELEM_COMMENT) break; // can comment ???
+            if(SelectedWhich == ELEM_COMMENT)
+                break; // can comment ???
             int i, j;
             if(FindSelected(&i, &j)) {
                 i--;
-                while(i >= 0 && (!VALID_LEAF(DisplayMatrix[i][j]) ||
-                    (DisplayMatrix[i][j] == Selected)))
-                {
+                while(i >= 0 && (!VALID_LEAF(DisplayMatrix[i][j]) || (DisplayMatrix[i][j] == Selected))) {
                     i--;
                 }
                 if(i >= 0) {
@@ -419,13 +420,12 @@ void MoveCursorKeyboard(int keyCode)
                 SelectElement(-1, -1, SELECTED_RIGHT);
                 break;
             }
-            if(SelectedWhich == ELEM_COMMENT) break;
+            if(SelectedWhich == ELEM_COMMENT)
+                break;
             int i, j;
             if(FindSelected(&i, &j)) {
                 i++;
-                while(i < DISPLAY_MATRIX_X_SIZE &&
-                    !VALID_LEAF(DisplayMatrix[i][j]))
-                {
+                while(i < DISPLAY_MATRIX_X_SIZE && !VALID_LEAF(DisplayMatrix[i][j])) {
                     i++;
                 }
                 if(i != DISPLAY_MATRIX_X_SIZE) {
@@ -639,7 +639,8 @@ static BOOL ReplaceElem(int which, void *any, ElemLeaf *seek,
 //-----------------------------------------------------------------------------
 BOOL ReplaceSelectedElement(void)
 {
-    if(!Selected/* || Selected->selectedState == SELECTED_NONE*/) return FALSE;
+    if(!Selected /* || Selected->selectedState == SELECTED_NONE*/)
+        return FALSE;
 
     int i;
     for(i = 0; i < Prog.numRungs; i++)
@@ -654,7 +655,8 @@ BOOL ReplaceSelectedElement(void)
 //-----------------------------------------------------------------------------
 void EditSelectedElement(void)
 {
-    if(!Selected || Selected->selectedState == SELECTED_NONE) return;
+    if(!Selected || Selected->selectedState == SELECTED_NONE)
+        return;
 
     switch(SelectedWhich) {
         case ELEM_COMMENT:
@@ -1040,7 +1042,8 @@ BOOL MoveCursorNear(int *gx, int *gy)
                     SelectElement(*gx+across, *gy, SELECTED_LEFT);
                     return FindSelected(&*gx, &*gy);
                 }
-                if(!DisplayMatrix[*gx+across][*gy]) break;
+                if(!DisplayMatrix[*gx + across][*gy])
+                    break;
             }
         }
     }
@@ -1110,7 +1113,8 @@ void MakeNormalSelected(void)
 //-----------------------------------------------------------------------------
 void MakeSetOnlySelected(void)
 {
-    if(SelectedWhich != ELEM_COIL) return;
+    if(SelectedWhich != ELEM_COIL)
+        return;
 
     ElemCoil *c = &Selected->d.coil;
     c->setOnly = TRUE;
@@ -1124,7 +1128,8 @@ void MakeSetOnlySelected(void)
 //-----------------------------------------------------------------------------
 void MakeResetOnlySelected(void)
 {
-    if(SelectedWhich != ELEM_COIL) return;
+    if(SelectedWhich != ELEM_COIL)
+        return;
 
     ElemCoil *c = &Selected->d.coil;
     c->resetOnly = TRUE;
@@ -1138,7 +1143,8 @@ void MakeResetOnlySelected(void)
 //-----------------------------------------------------------------------------
 void MakeTtriggerSelected(void)
 {
-    if(SelectedWhich != ELEM_COIL) return;
+    if(SelectedWhich != ELEM_COIL)
+        return;
 
     ElemCoil *c = &Selected->d.coil;
     c->ttrigger = TRUE;

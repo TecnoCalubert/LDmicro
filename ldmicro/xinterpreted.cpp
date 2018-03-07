@@ -201,16 +201,13 @@ void CompileXInterpreted(char *outFile)
                 if (ifOpElse[ifDepth] == 0) {
                     // There is no else; if should jump straight to the
                     // instruction after this one if the condition is false.
-                    OutProg[ifOpIf[ifDepth]] =
-                        CheckRange(outPc - 1 - ifOpIf[ifDepth], "pc");
+                    OutProg[ifOpIf[ifDepth]] = CheckRange(outPc - 1 - ifOpIf[ifDepth], "pc");
                 } else {
                     // There is an else clause; if the if is false then jump
                     // just past the else, and if the else is reached then
                     // jump to the endif.
-                    OutProg[ifOpIf[ifDepth]] =
-                        CheckRange(ifOpElse[ifDepth] - ifOpIf[ifDepth], "pc");
-                    OutProg[ifOpElse[ifDepth]] =
-                        CheckRange(outPc - 1 - ifOpElse[ifDepth], "pc");
+                    OutProg[ifOpIf[ifDepth]] = CheckRange(ifOpElse[ifDepth] - ifOpIf[ifDepth], "pc");
+                    OutProg[ifOpElse[ifDepth]] = CheckRange(outPc - 1 - ifOpElse[ifDepth], "pc");
                 }
                 // But don't generate an instruction for this.
                 continue;
@@ -283,8 +280,7 @@ void CompileXInterpreted(char *outFile)
 
     for (int i = 0; i < Prog.io.count; i++) {
         PlcProgramSingleIo io = Prog.io.assignment[i];
-        fprintf(f, "%2d %20s %2d %2d %2d %05d\n", i, io.name, io.type,
-                GetArduinoPinNumber(io.pin), io.modbus.Slave,
+        fprintf(f, "%2d %20s %2d %2d %2d %05d\n", i, io.name, io.type, GetArduinoPinNumber(io.pin), io.modbus.Slave,
                 io.modbus.Address);
     }
 
@@ -301,11 +297,10 @@ void CompileXInterpreted(char *outFile)
     fclose(f);
 
     char str[MAX_PATH + 500];
-    sprintf(
-        str,
-        _("Compile successful; wrote interpretable code to '%s'.\r\n\r\n"
-          "You probably have to adapt the interpreter to your application. See "
-          "the documentation."),
-        outFile);
+    sprintf(str,
+            _("Compile successful; wrote interpretable code to '%s'.\r\n\r\n"
+              "You probably have to adapt the interpreter to your application. See "
+              "the documentation."),
+            outFile);
     CompileSuccessfulMessage(str);
 }

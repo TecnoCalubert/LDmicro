@@ -37,13 +37,13 @@ static struct {
 static int SingleBitItemsCount;
 
 static struct {
-    char   name[MAX_NAME_LEN];     //
-    SDWORD val;                    //
-    char  valstr[MAX_COMMENT_LEN]; // value in simulation mode for STRING types.
-    DWORD usedFlags;               //
-    int   initedRung;              // Variable inited in rung.
-    DWORD initedOp;                // Variable inited in Op number.
-    char  usedRungs[MAX_COMMENT_LEN]; // Rungs, where variable is used.
+    char   name[MAX_NAME_LEN];         //
+    SDWORD val;                        //
+    char   valstr[MAX_COMMENT_LEN];    // value in simulation mode for STRING types.
+    DWORD  usedFlags;                  //
+    int    initedRung;                 // Variable inited in rung.
+    DWORD  initedOp;                   // Variable inited in Op number.
+    char   usedRungs[MAX_COMMENT_LEN]; // Rungs, where variable is used.
 } Variables[MAX_IO];
 static int VariableCount;
 
@@ -191,8 +191,7 @@ BOOL GetSingleBit(char *name)
 // Count a timer up (i.e. increment its associated count by 1). Must already
 // exist in the table.
 //-----------------------------------------------------------------------------
-static void Increment(const char *name, const char *overlap,
-                      const char *overflow)
+static void Increment(const char *name, const char *overlap, const char *overflow)
 {
     int    sov = SizeOfVar(name);
     SDWORD signMask = 1 << (sov * 8 - 1);
@@ -217,8 +216,7 @@ static void Increment(const char *name, const char *overlap,
 }
 
 //-----------------------------------------------------------------------------
-static void Decrement(const char *name, const char *overlap,
-                      const char *overflow)
+static void Decrement(const char *name, const char *overlap, const char *overflow)
 {
     int    sov = SizeOfVar(name);
     SDWORD signMask = 1 << (sov * 8 - 1);
@@ -244,8 +242,7 @@ static void Decrement(const char *name, const char *overlap,
 }
 
 //-----------------------------------------------------------------------------
-static SDWORD AddVariable(const char *name1, const char *name2,
-                          const char *name3, const char *overflow)
+static SDWORD AddVariable(const char *name1, const char *name2, const char *name3, const char *overflow)
 {
     long long int ret = (long long int)GetSimulationVariable(name2) +
                         (long long int)GetSimulationVariable(name3);

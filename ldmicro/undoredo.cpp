@@ -67,8 +67,7 @@ static void *DeepCopy(int which, void *any)
             n->count = s->count;
             for (i = 0; i < s->count; i++) {
                 n->contents[i].which = s->contents[i].which;
-                n->contents[i].data.any =
-                    DeepCopy(s->contents[i].which, s->contents[i].data.any);
+                n->contents[i].data.any = DeepCopy(s->contents[i].which, s->contents[i].data.any);
             }
             return n;
         }
@@ -79,8 +78,7 @@ static void *DeepCopy(int which, void *any)
             n->count = p->count;
             for (i = 0; i < p->count; i++) {
                 n->contents[i].which = p->contents[i].which;
-                n->contents[i].data.any =
-                    DeepCopy(p->contents[i].which, p->contents[i].data.any);
+                n->contents[i].data.any = DeepCopy(p->contents[i].which, p->contents[i].data.any);
             }
             return n;
         }
@@ -130,8 +128,7 @@ static void PushProgramStack(ProgramStack *ps, BOOL deepCopy)
     if (deepCopy) {
         int i;
         for (i = 0; i < Prog.numRungs; i++) {
-            ps->prog[ps->write].rungs[i] =
-                (ElemSubcktSeries *)DeepCopy(ELEM_SERIES_SUBCKT, Prog.rungs[i]);
+            ps->prog[ps->write].rungs[i] = (ElemSubcktSeries *)DeepCopy(ELEM_SERIES_SUBCKT, Prog.rungs[i]);
         }
     }
 

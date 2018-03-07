@@ -39,11 +39,11 @@ static HWND Labels[4];
 static HWND StringTextbox;
 
 static BOOL WasAsString;
-static int WasCount;
+static int  WasCount;
 
-static HWND ValuesTextbox[MAX_LOOK_UP_TABLE_LEN * 2];
+static HWND     ValuesTextbox[MAX_LOOK_UP_TABLE_LEN * 2];
 static LONG_PTR PrevValuesProc[MAX_LOOK_UP_TABLE_LEN * 2];
-static HWND ValuesLabel[MAX_LOOK_UP_TABLE_LEN * 2];
+static HWND     ValuesLabel[MAX_LOOK_UP_TABLE_LEN * 2];
 
 static SDWORD ValuesCache[MAX_LOOK_UP_TABLE_LEN * 2];
 
@@ -55,8 +55,7 @@ static LONG_PTR PrevCountProc;
 //-----------------------------------------------------------------------------
 // Don't allow any characters other than 0-9 and minus in the values.
 //-----------------------------------------------------------------------------
-static LRESULT CALLBACK MyNumberProc(HWND hwnd, UINT msg, WPARAM wParam,
-    LPARAM lParam)
+static LRESULT CALLBACK MyNumberProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if(msg == WM_CHAR) {
         if(!(ishobdigit(wParam) || wParam == '\b' || wParam == '-')) {
@@ -65,14 +64,14 @@ static LRESULT CALLBACK MyNumberProc(HWND hwnd, UINT msg, WPARAM wParam,
     }
 
     WNDPROC w;
-    int i;
-    for(i = 0; i < MAX_LOOK_UP_TABLE_LEN; i++) {
+    for(int i = 0; i < MAX_LOOK_UP_TABLE_LEN; i++) {
         if(hwnd == ValuesTextbox[i]) {
             w = (WNDPROC)PrevValuesProc[i];
             break;
         }
     }
-    if(i == MAX_LOOK_UP_TABLE_LEN) oops();
+    if(i == MAX_LOOK_UP_TABLE_LEN)
+        oops();
 
     return CallWindowProc(w, hwnd, msg, wParam, lParam);
 }
@@ -80,8 +79,7 @@ static LRESULT CALLBACK MyNumberProc(HWND hwnd, UINT msg, WPARAM wParam,
 //-----------------------------------------------------------------------------
 // Don't allow any characters other than 0-9 in the count.
 //-----------------------------------------------------------------------------
-static LRESULT CALLBACK MyDigitsProc(HWND hwnd, UINT msg, WPARAM wParam,
-    LPARAM lParam)
+static LRESULT CALLBACK MyDigitsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if(msg == WM_CHAR) {
         if(!(isdigit(wParam) || wParam == '\b')) {
@@ -95,13 +93,10 @@ static LRESULT CALLBACK MyDigitsProc(HWND hwnd, UINT msg, WPARAM wParam,
 //-----------------------------------------------------------------------------
 // Don't allow any characters other than A-Za-z0-9_ in the name.
 //-----------------------------------------------------------------------------
-static LRESULT CALLBACK MyNameProc(HWND hwnd, UINT msg, WPARAM wParam,
-    LPARAM lParam)
+static LRESULT CALLBACK MyNameProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if(msg == WM_CHAR) {
-        if(!(isalpha(wParam) || isdigit(wParam) || wParam == '_' ||
-            wParam == '\b'))
-        {
+        if(!(isalpha(wParam) || isdigit(wParam) || wParam == '_' || wParam == '\b')) {
             return 0;
         }
     }
@@ -125,75 +120,169 @@ static LRESULT CALLBACK MyNameProc(HWND hwnd, UINT msg, WPARAM wParam,
 //-----------------------------------------------------------------------------
 static void MakeFixedControls(BOOL forPwl)
 {
-    Labels[0] = CreateWindowEx(0, WC_STATIC, _("Destination:"),
-        WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SS_RIGHT,
-        0, 10, 78 +20, 21, LutDialog, NULL, Instance, NULL);
+    Labels[0] = CreateWindowEx(0,
+                               WC_STATIC,
+                               _("Destination:"),
+                               WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SS_RIGHT,
+                               0,
+                               10,
+                               78 + 20,
+                               21,
+                               LutDialog,
+                               NULL,
+                               Instance,
+                               NULL);
     NiceFont(Labels[0]);
 
-    DestTextbox = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, "",
-        WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
-        85 +20, 10, 120, 21, LutDialog, NULL, Instance, NULL);
+    DestTextbox = CreateWindowEx(WS_EX_CLIENTEDGE,
+                                 WC_EDIT,
+                                 "",
+                                 WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
+                                 85 + 20,
+                                 10,
+                                 120,
+                                 21,
+                                 LutDialog,
+                                 NULL,
+                                 Instance,
+                                 NULL);
     FixedFont(DestTextbox);
 
-    Labels[1] = CreateWindowEx(0, WC_STATIC, _("Name:"),
-        WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SS_RIGHT,
-        0, 40, 78 +20, 21, LutDialog, NULL, Instance, NULL);
+    Labels[1] = CreateWindowEx(0,
+                               WC_STATIC,
+                               _("Name:"),
+                               WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SS_RIGHT,
+                               0,
+                               40,
+                               78 + 20,
+                               21,
+                               LutDialog,
+                               NULL,
+                               Instance,
+                               NULL);
     NiceFont(Labels[1]);
 
-    NameTextbox = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, "",
-        WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
-        85 +20, 40, 120, 21, LutDialog, NULL, Instance, NULL);
+    NameTextbox = CreateWindowEx(WS_EX_CLIENTEDGE,
+                                 WC_EDIT,
+                                 "",
+                                 WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
+                                 85 + 20,
+                                 40,
+                                 120,
+                                 21,
+                                 LutDialog,
+                                 NULL,
+                                 Instance,
+                                 NULL);
     FixedFont(NameTextbox);
 
-    Labels[2] = CreateWindowEx(0, WC_STATIC, _("Index:"),
-        WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SS_RIGHT,
-        10, 70, 68 +20, 21, LutDialog, NULL, Instance, NULL);
+    Labels[2] = CreateWindowEx(0,
+                               WC_STATIC,
+                               _("Index:"),
+                               WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SS_RIGHT,
+                               10,
+                               70,
+                               68 + 20,
+                               21,
+                               LutDialog,
+                               NULL,
+                               Instance,
+                               NULL);
     NiceFont(Labels[2]);
 
-    IndexTextbox = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, "",
-        WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
-        85 +20, 40 +30, 120, 21, LutDialog, NULL, Instance, NULL);
+    IndexTextbox = CreateWindowEx(WS_EX_CLIENTEDGE,
+                                  WC_EDIT,
+                                  "",
+                                  WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
+                                  85 + 20,
+                                  40 + 30,
+                                  120,
+                                  21,
+                                  LutDialog,
+                                  NULL,
+                                  Instance,
+                                  NULL);
     FixedFont(IndexTextbox);
 
     const char *txt1 = forPwl ? _("Points:") : _("Table size:");
-    char txt[1024];
-    sprintf(txt,"%s max %d", txt1, forPwl ? MAX_LOOK_UP_TABLE_LEN/2 : MAX_LOOK_UP_TABLE_LEN);
-    Labels[3] = CreateWindowEx(0,WC_STATIC, txt,
-        WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SS_RIGHT,
-        0, 70 +30, 78 +20, 21, LutDialog, NULL, Instance, NULL);
+    char        txt[1024];
+    sprintf(txt, "%s max %d", txt1, forPwl ? MAX_LOOK_UP_TABLE_LEN / 2 : MAX_LOOK_UP_TABLE_LEN);
+    Labels[3] = CreateWindowEx(0,
+                               WC_STATIC,
+                               txt,
+                               WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SS_RIGHT,
+                               0,
+                               70 + 30,
+                               78 + 20,
+                               21,
+                               LutDialog,
+                               NULL,
+                               Instance,
+                               NULL);
     NiceFont(Labels[3]);
 
-    CountTextbox = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, "",
-        WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
-        85 +20, 70 +30, 120, 21, LutDialog, NULL, Instance, NULL);
+    CountTextbox = CreateWindowEx(WS_EX_CLIENTEDGE,
+                                  WC_EDIT,
+                                  "",
+                                  WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
+                                  85 + 20,
+                                  70 + 30,
+                                  120,
+                                  21,
+                                  LutDialog,
+                                  NULL,
+                                  Instance,
+                                  NULL);
     NiceFont(CountTextbox);
 
     if(!forPwl) {
-        AsStringCheckbox = CreateWindowEx(0, WC_BUTTON,
-            _("Edit table of ASCII values like a string"), WS_CHILD |
-                WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE | BS_AUTOCHECKBOX,
-            10, 100 +30, 300, 21, LutDialog, NULL, Instance, NULL);
+        AsStringCheckbox = CreateWindowEx(0,
+                                          WC_BUTTON,
+                                          _("Edit table of ASCII values like a string"),
+                                          WS_CHILD | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE | BS_AUTOCHECKBOX,
+                                          10,
+                                          100 + 30,
+                                          300,
+                                          21,
+                                          LutDialog,
+                                          NULL,
+                                          Instance,
+                                          NULL);
         NiceFont(AsStringCheckbox);
     }
 
-    OkButton = CreateWindowEx(0, WC_BUTTON, _("OK"),
-        WS_CHILD | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE | BS_DEFPUSHBUTTON,
-        231 +20, 10, 70, 23, LutDialog, NULL, Instance, NULL);
+    OkButton = CreateWindowEx(0,
+                              WC_BUTTON,
+                              _("OK"),
+                              WS_CHILD | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE | BS_DEFPUSHBUTTON,
+                              231 + 20,
+                              10,
+                              70,
+                              23,
+                              LutDialog,
+                              NULL,
+                              Instance,
+                              NULL);
     NiceFont(OkButton);
 
-    CancelButton = CreateWindowEx(0, WC_BUTTON, _("Cancel"),
-        WS_CHILD | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
-        231 +20, 40, 70, 23, LutDialog, NULL, Instance, NULL);
+    CancelButton = CreateWindowEx(0,
+                                  WC_BUTTON,
+                                  _("Cancel"),
+                                  WS_CHILD | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
+                                  231 + 20,
+                                  40,
+                                  70,
+                                  23,
+                                  LutDialog,
+                                  NULL,
+                                  Instance,
+                                  NULL);
     NiceFont(CancelButton);
 
-    PrevNameProc = SetWindowLongPtr(NameTextbox, GWLP_WNDPROC,
-        (LONG_PTR)MyNameProc);
-    PrevDestProc = SetWindowLongPtr(DestTextbox, GWLP_WNDPROC,
-        (LONG_PTR)MyNameProc);
-    PrevIndexProc = SetWindowLongPtr(IndexTextbox, GWLP_WNDPROC,
-        (LONG_PTR)MyNameProc);
-    PrevCountProc = SetWindowLongPtr(CountTextbox, GWLP_WNDPROC,
-        (LONG_PTR)MyDigitsProc);
+    PrevNameProc = SetWindowLongPtr(NameTextbox, GWLP_WNDPROC, (LONG_PTR)MyNameProc);
+    PrevDestProc = SetWindowLongPtr(DestTextbox, GWLP_WNDPROC, (LONG_PTR)MyNameProc);
+    PrevIndexProc = SetWindowLongPtr(IndexTextbox, GWLP_WNDPROC, (LONG_PTR)MyNameProc);
+    PrevCountProc = SetWindowLongPtr(CountTextbox, GWLP_WNDPROC, (LONG_PTR)MyDigitsProc);
 }
 
 //-----------------------------------------------------------------------------
@@ -238,11 +327,12 @@ static void MakeLutControls(BOOL asString, int count, BOOL forPwl)
     WasAsString = asString;
     WasCount = count;
 
-    if(forPwl && asString) oops();
+    if(forPwl && asString)
+        oops();
 
     if(asString) {
-        char str[3*MAX_LOOK_UP_TABLE_LEN*2+1];
-        int i, j;
+        char str[3 * MAX_LOOK_UP_TABLE_LEN * 2 + 1];
+        int  i, j;
         j = 0;
         for(i = 0; i < count; i++) {
             int c = ValuesCache[i];
@@ -268,60 +358,85 @@ static void MakeLutControls(BOOL asString, int count, BOOL forPwl)
             }
         }
         str[j++] = '\0';
-        StringTextbox = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, str,
-            WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS |
-                WS_VISIBLE,
-            10, 130 +30, 294, 21, LutDialog, NULL, Instance, NULL);
+        StringTextbox = CreateWindowEx(WS_EX_CLIENTEDGE,
+                                       WC_EDIT,
+                                       str,
+                                       WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
+                                       10,
+                                       130 + 30,
+                                       294,
+                                       21,
+                                       LutDialog,
+                                       NULL,
+                                       Instance,
+                                       NULL);
         FixedFont(StringTextbox);
         SendMessage(CountTextbox, EM_SETREADONLY, (WPARAM)TRUE, 0);
-        MoveWindow(LutDialog, 100, 30, 320 +20, 185 +30, TRUE);
+        MoveWindow(LutDialog, 100, 30, 320 + 20, 185 + 30, TRUE);
     } else {
         int i;
         int base;
         if(forPwl) {
-            base = 100 +30;
+            base = 100 + 30;
         } else {
-            base = 140 +20;
+            base = 140 + 20;
         }
         for(i = 0; i < count; i++) {
             int x, y;
 
             if(i < 16) {
                 x = 10;
-                y = base+30*i;
+                y = base + 30 * i;
             } else {
                 x = 160;
-                y = base+30*(i-16);
+                y = base + 30 * (i - 16);
             }
 
-            x = 10 + (i / 16)*150;
-            y = base+30*(i % 16);
+            x = 10 + (i / 16) * 150;
+            y = base + 30 * (i % 16);
 
             char buf[20];
             sprintf(buf, "%d", ValuesCache[i]);
-            ValuesTextbox[i] = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT, buf,
-                WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS |
-                    WS_VISIBLE,
-                x+30, y, 80, 21, LutDialog, NULL, Instance, NULL);
+            ValuesTextbox[i] = CreateWindowEx(WS_EX_CLIENTEDGE,
+                                              WC_EDIT,
+                                              buf,
+                                              WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP | WS_CLIPSIBLINGS | WS_VISIBLE,
+                                              x + 30,
+                                              y,
+                                              80,
+                                              21,
+                                              LutDialog,
+                                              NULL,
+                                              Instance,
+                                              NULL);
             NiceFont(ValuesTextbox[i]);
 
             if(forPwl) {
-                sprintf(buf, "%c%d:", (i & 1) ? 'y' : 'x', i/2);
+                sprintf(buf, "%c%d:", (i & 1) ? 'y' : 'x', i / 2);
             } else {
                 sprintf(buf, "%2d:", i);
             }
-            ValuesLabel[i] = CreateWindowEx(0, WC_STATIC, buf,
-                WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE,
-                x, y+3, 100, 21, LutDialog, NULL, Instance, NULL);
+            ValuesLabel[i] = CreateWindowEx(0,
+                                            WC_STATIC,
+                                            buf,
+                                            WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE,
+                                            x,
+                                            y + 3,
+                                            100,
+                                            21,
+                                            LutDialog,
+                                            NULL,
+                                            Instance,
+                                            NULL);
             FixedFont(ValuesLabel[i]);
 
-            PrevValuesProc[i] = SetWindowLongPtr(ValuesTextbox[i],
-                GWLP_WNDPROC, (LONG_PTR)MyNumberProc);
+            PrevValuesProc[i] = SetWindowLongPtr(ValuesTextbox[i], GWLP_WNDPROC, (LONG_PTR)MyNumberProc);
         }
-        if(count > MAX_LOOK_UP_TABLE_LEN) count = MAX_LOOK_UP_TABLE_LEN;
+        if(count > MAX_LOOK_UP_TABLE_LEN)
+            count = MAX_LOOK_UP_TABLE_LEN;
         SendMessage(CountTextbox, EM_SETREADONLY, (WPARAM)FALSE, 0);
 
-        MoveWindow(LutDialog, 100, 30, 320 +20 +min(count/16,2)*150, base + 30 + min(count,16)*30, TRUE);
+        MoveWindow(LutDialog, 100, 30, 320 + 20 + min(count / 16, 2) * 150, base + 30 + min(count, 16) * 30, TRUE);
     }
 }
 
@@ -337,6 +452,7 @@ BOOL StringToValuesCache(char *str, int *c)
     while(*str) {
         if(*str == '\\') {
             str++;
+            // clang-format off
             switch(*str) {
                 case 'r': ValuesCache[count++] = '\r'; break;
                 case 'n': ValuesCache[count++] = '\n'; break;
@@ -344,6 +460,7 @@ BOOL StringToValuesCache(char *str, int *c)
                 case 'b': ValuesCache[count++] = '\b'; break;
                 default:  ValuesCache[count++] = *str; break;
             }
+            // clang-format on
         } else {
             ValuesCache[count++] = *str;
         }
@@ -386,9 +503,18 @@ void ShowLookUpTableDialog(ElemLeaf *l)
 
     // Now create the dialog's fixed controls, plus the changing (depending
     // on show style/entry count) controls for the initial configuration.
-    LutDialog = CreateWindowClient(0, "LDmicroDialog",
-        _("Look-Up Table"), WS_OVERLAPPED | WS_SYSMENU,
-        100, 100, 320, 375, NULL, NULL, Instance, NULL);
+    LutDialog = CreateWindowClient(0,
+                                   "LDmicroDialog",
+                                   _("Look-Up Table"),
+                                   WS_OVERLAPPED | WS_SYSMENU,
+                                   100,
+                                   100,
+                                   320,
+                                   375,
+                                   NULL,
+                                   NULL,
+                                   Instance,
+                                   NULL);
     MakeFixedControls(FALSE);
     MakeLutControls(asString, count, FALSE);
 
@@ -451,15 +577,13 @@ void ShowLookUpTableDialog(ElemLeaf *l)
         // and use that to update the (read-only) count field.
         if(asString) {
             char scratch[1024];
-            SendMessage(StringTextbox, WM_GETTEXT, (WPARAM)(sizeof(scratch)-1),
-                (LPARAM)scratch);
+            SendMessage(StringTextbox, WM_GETTEXT, (WPARAM)(sizeof(scratch) - 1), (LPARAM)scratch);
             if(strcmp(scratch, PrevTableAsString)!=0) {
                 if(StringToValuesCache(scratch, &count)) {
                     strcpy(PrevTableAsString, scratch);
                 } else {
                     // Too long; put back the old one
-                    SendMessage(StringTextbox, WM_SETTEXT, 0,
-                        (LPARAM)PrevTableAsString);
+                    SendMessage(StringTextbox, WM_SETTEXT, 0, (LPARAM)PrevTableAsString);
                 }
             }
         }
@@ -515,9 +639,18 @@ void ShowPiecewiseLinearDialog(ElemLeaf *l)
 
     // Now create the dialog's fixed controls, plus the changing (depending
     // on show style/entry count) controls for the initial configuration.
-    LutDialog = CreateWindowClient(0, "LDmicroDialog",
-        _("Piecewise Linear Table"), WS_OVERLAPPED | WS_SYSMENU,
-        100, 100, 320, 375, NULL, NULL, Instance, NULL);
+    LutDialog = CreateWindowClient(0,
+                                   "LDmicroDialog",
+                                   _("Piecewise Linear Table"),
+                                   WS_OVERLAPPED | WS_SYSMENU,
+                                   100,
+                                   100,
+                                   320,
+                                   375,
+                                   NULL,
+                                   NULL,
+                                   Instance,
+                                   NULL);
     MakeFixedControls(TRUE);
     MakeLutControls(FALSE, count*2, TRUE);
 

@@ -38,12 +38,12 @@ static int   PlcIos_size = 0;
 
 int PlcIos_AppendAndGet(char *name)
 {
-    for (int i = 0; i < PlcIos_size; i++) {
-        if (strcmp(PlcIos[i], name) == 0)
+    for(int i = 0; i < PlcIos_size; i++) {
+        if(strcmp(PlcIos[i], name) == 0)
             return i;
     }
 
-    if (PlcIos_size == MAX_PLCIO)
+    if(PlcIos_size == MAX_PLCIO)
         return -1;
     PlcIos[PlcIos_size++] = name;
     return PlcIos_size - 1;
@@ -51,7 +51,7 @@ int PlcIos_AppendAndGet(char *name)
 
 static int CheckRange(int value, const char *name)
 {
-    if (value < 0 || value > 255) {
+    if(value < 0 || value > 255) {
         char msg[80];
         sprintf(msg, _("%s=%d: out of range for 8bits target"), name, value);
         Error(msg);
@@ -62,9 +62,9 @@ static int CheckRange(int value, const char *name)
 
 static BYTE GetArduinoPinNumber(int pin)
 {
-    if (Prog.mcu)
-        for (int i = 0; i < Prog.mcu->pinCount; i++) {
-            if (Prog.mcu->pinInfo[i].pin == pin)
+    if(Prog.mcu)
+        for(int i = 0; i < Prog.mcu->pinCount; i++) {
+            if(Prog.mcu->pinInfo[i].pin == pin)
                 return Prog.mcu->pinInfo[i].ArduinoPin;
         }
     return 0;
@@ -83,7 +83,7 @@ static BYTE AddrForVariable(char *name)
 void CompileXInterpreted(char *outFile)
 {
     FILE *f = fopen(outFile, "w");
-    if (!f) {
+    if(!f) {
         Error(_("Couldn't write to '%s'"), outFile);
         return;
     }
@@ -91,7 +91,7 @@ void CompileXInterpreted(char *outFile)
     // Preload physical IOs in the table
     PlcIos_size = 0;
 
-    for (int i = 0; i < Prog.io.count; i++) {
+    for(int i = 0; i < Prog.io.count; i++) {
         PlcProgramSingleIo io = Prog.io.assignment[i];
         PlcIos[PlcIos_size++] = Prog.io.assignment[i].name;
     }
@@ -111,8 +111,8 @@ void CompileXInterpreted(char *outFile)
     int ifOpElse[MAX_IF_NESTING];
 
     outPc = 0;
-    for (ipc = 0; ipc < IntCodeLen; ipc++) {
-        switch (IntCode[ipc].op) {
+    for(ipc = 0; ipc < IntCodeLen; ipc++) {
+        switch(IntCode[ipc].op) {
             case INT_CLEAR_BIT:
             case INT_SET_BIT:
                 OutProg[outPc++] = IntCode[ipc].op;
@@ -198,7 +198,7 @@ void CompileXInterpreted(char *outFile)
 
             case INT_END_IF:
                 --ifDepth;
-                if (ifOpElse[ifDepth] == 0) {
+                if(ifOpElse[ifDepth] == 0) {
                     // There is no else; if should jump straight to the
                     // instruction after this one if the condition is false.
                     OutProg[ifOpIf[ifDepth]] = CheckRange(outPc - 1 - ifOpIf[ifDepth], "pc");
@@ -264,8 +264,9 @@ void CompileXInterpreted(char *outFile)
             case INT_UART_RECV_AVAIL:
             case INT_WRITE_STRING:
             default:
-                Error(_("Unsupported op (anything UART, EEPROM, SFR..) for "
-                        "interpretable target."));
+                Error(
+                    _("Unsupported op (anything UART, EEPROM, SFR..) for "
+                      "interpretable target."));
                 Error("INT_%d", IntCode[ipc].op);
                 fclose(f);
                 return;
@@ -278,17 +279,23 @@ void CompileXInterpreted(char *outFile)
     // $$IO nb_named_IO total_nb_IO
     fprintf(f, "$$IO %d %d\n", Prog.io.count, PlcIos_size);
 
-    for (int i = 0; i < Prog.io.count; i++) {
+    for(int i = 0; i < Prog.io.count; i++) {
         PlcProgramSingleIo io = Prog.io.assignment[i];
-        fprintf(f, "%2d %20s %2d %2d %2d %05d\n", i, io.name, io.type, GetArduinoPinNumber(io.pin), io.modbus.Slave,
+        fprintf(f,
+                "%2d %20s %2d %2d %2d %05d\n",
+                i,
+                io.name,
+                io.type,
+                GetArduinoPinNumber(io.pin),
+                io.modbus.Slave,
                 io.modbus.Address);
     }
 
     // $$LDcode program_size
     fprintf(f, "$$LDcode %d\n", outPc);
-    for (int i = 0; i < outPc; i++) {
+    for(int i = 0; i < outPc; i++) {
         fprintf(f, "%02X", OutProg[i]);
-        if ((i % 16) == 15 || i == outPc - 1)
+        if((i % 16) == 15 || i == outPc - 1)
             fprintf(f, "\n");
     }
 

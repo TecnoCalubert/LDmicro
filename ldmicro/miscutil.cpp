@@ -53,29 +53,32 @@ HFONT MyFixedFont;
 void dbp(const char *str, ...)
 {
     va_list f;
-    char buf[1024*8];
+    char    buf[1024 * 8];
     va_start(f, str);
     vsprintf(buf, str, f);
     OutputDebugString(buf);
-//  OutputDebugString("\n");
+    //  OutputDebugString("\n");
 }
 
 //-----------------------------------------------------------------------------
 // Wrapper for AttachConsole that does nothing running under <WinXP, so that
 // we still run (except for the console stuff) in earlier versions.
 //-----------------------------------------------------------------------------
-#define ATTACH_PARENT_PROCESS ((DWORD)-1) // defined in WinCon.h, but only if
-                                          // _WIN32_WINNT >= 0x500
+#define ATTACH_PARENT_PROCESS \
+    ((DWORD)-1) // defined in WinCon.h, but only if                                                                    \
+                // _WIN32_WINNT >= 0x500
 BOOL AttachConsoleDynamic(DWORD base)
 {
     typedef BOOL WINAPI fptr_acd(DWORD base);
-    fptr_acd *fp;
+    fptr_acd *          fp;
 
     HMODULE hm = LoadLibrary("kernel32.dll");
-    if(!hm) return FALSE;
+    if(!hm)
+        return FALSE;
 
     fp = (fptr_acd *)GetProcAddress(hm, "AttachConsole");
-    if(!fp) return FALSE;
+    if(!fp)
+        return FALSE;
 
     return fp(base);
 }
@@ -83,11 +86,12 @@ BOOL AttachConsoleDynamic(DWORD base)
 //-----------------------------------------------------------------------------
 void doexit(int status)
 {
-    if(status != EXIT_SUCCESS){
-       Error("Please, open new issue at\n"
-             "https://github.com/LDmicro/LDmicro/issues/new\n"
-             "or send bug report to\n"
-             "LDmicroGitHub@gmail.com");
+    if(status != EXIT_SUCCESS) {
+        Error(
+            "Please, open new issue at\n"
+            "https://github.com/LDmicro/LDmicro/issues/new\n"
+            "or send bug report to\n"
+            "LDmicroGitHub@gmail.com");
     }
     exit(status);
 }
@@ -98,17 +102,17 @@ void doexit(int status)
 void Error(const char *str, ...)
 {
     va_list f;
-    char buf[1024];
+    char    buf[1024];
     va_start(f, str);
     vsprintf(buf, str, f);
     dbp(buf);
     if(RunningInBatchMode) {
         AttachConsoleDynamic(ATTACH_PARENT_PROCESS);
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        DWORD written;
+        DWORD  written;
 
         // Indicate that it's an error, plus the output filename
-        char str[MAX_PATH+100];
+        char str[MAX_PATH + 100];
         sprintf(str, "compile error ('%s'): ", CurrentCompileFile);
         WriteFile(h, str, strlen(str), &written, NULL);
         // The error message itself
@@ -119,14 +123,13 @@ void Error(const char *str, ...)
     } else {
         HWND h = GetForegroundWindow();
         char buf2[1024];
-        if(buf[0]==' ') {
+        if(buf[0] == ' ') {
             //sprintf(buf2, "%s (%s)", _("LDmicro Warning"), AboutText[38]);
             MessageBox(h, &buf[1], _("LDmicro Warning"), MB_OK | MB_ICONWARNING);
         } else {
             sprintf(buf2, "%s (%s)", _("LDmicro Error"), AboutText[38]);
             MessageBox(h, buf, buf2, MB_OK | MB_ICONERROR);
         }
-
     }
 }
 
@@ -137,25 +140,23 @@ void Error(const char *str, ...)
 void CompileSuccessfulMessage(char *str, unsigned int uType)
 {
     if(RunningInBatchMode) {
-        char str[MAX_PATH+100];
+        char str[MAX_PATH + 100];
         sprintf(str, "compiled okay, wrote '%s'\n", CurrentCompileFile);
 
         AttachConsoleDynamic(ATTACH_PARENT_PROCESS);
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        DWORD written;
+        DWORD  written;
         WriteFile(h, str, strlen(str), &written, NULL);
-    } else if (uType == MB_ICONINFORMATION) {
-        MessageBox(MainWindow, str, _("Compile Successful"),
-            MB_OK | uType);
+    } else if(uType == MB_ICONINFORMATION) {
+        MessageBox(MainWindow, str, _("Compile Successful"), MB_OK | uType);
     } else {
-        MessageBox(MainWindow, str, _("Compile is successful but exceed the memory size !!!"),
-            MB_OK | uType);
+        MessageBox(MainWindow, str, _("Compile is successful but exceed the memory size !!!"), MB_OK | uType);
     }
 }
 
 void CompileSuccessfulMessage(char *str)
 {
-    CompileSuccessfulMessage(str,MB_ICONINFORMATION);
+    CompileSuccessfulMessage(str, MB_ICONINFORMATION);
 }
 //-----------------------------------------------------------------------------
 // Check the consistency of the heap on which all the PLC program stuff is
@@ -164,8 +165,8 @@ void CompileSuccessfulMessage(char *str)
 void CheckHeap(const char *file, int line)
 {
     static unsigned int SkippedCalls;
-    static SDWORD LastCallTime;
-    SDWORD now = GetTickCount();
+    static SDWORD       LastCallTime;
+    SDWORD              now = GetTickCount();
 
     // It slows us down too much to do the check every time we are called;
     // but let's still do the check periodically; let's do it every 70
@@ -201,7 +202,6 @@ void CheckFree(void *p)
     HeapFree(MainHeap, 0, p);
 }
 
-
 //-----------------------------------------------------------------------------
 // Clear the checksum and write the : that starts an IHEX record.
 //-----------------------------------------------------------------------------
@@ -235,12 +235,10 @@ void FinishIhex(FILE *f)
 //-----------------------------------------------------------------------------
 // Create a window with a given client area.
 //-----------------------------------------------------------------------------
-HWND CreateWindowClient(DWORD exStyle, const char *className, const char *windowName,
-    DWORD style, int x, int y, int width, int height, HWND parent,
-    HMENU menu, HINSTANCE instance, void *param)
+HWND CreateWindowClient(DWORD exStyle, const char *className, const char *windowName, DWORD style, int x, int y,
+                        int width, int height, HWND parent, HMENU menu, HINSTANCE instance, void *param)
 {
-    HWND h = CreateWindowEx(exStyle, className, windowName, style, x, y,
-        width, height, parent, menu, instance, param);
+    HWND h = CreateWindowEx(exStyle, className, windowName, style, x, y, width, height, parent, menu, instance, param);
 
     RECT r;
     GetClientRect(h, &r);
@@ -256,10 +254,9 @@ HWND CreateWindowClient(DWORD exStyle, const char *className, const char *window
 // Window proc for the dialog boxes. This Ok/Cancel stuff is common to a lot
 // of places, and there are no other callbacks from the children.
 //-----------------------------------------------------------------------------
-static LRESULT CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam,
-    LPARAM lParam)
+static LRESULT CALLBACK DialogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    switch (msg) {
+    switch(msg) {
         case WM_NOTIFY:
             break;
 
@@ -313,30 +310,49 @@ void MakeDialogBoxClass(void)
     memset(&wc, 0, sizeof(wc));
     wc.cbSize = sizeof(wc);
 
-    wc.style            = CS_BYTEALIGNCLIENT | CS_BYTEALIGNWINDOW | CS_OWNDC |
-                          CS_DBLCLKS;
-    wc.lpfnWndProc      = (WNDPROC)DialogProc;
-    wc.hInstance        = Instance;
-    wc.hbrBackground    = (HBRUSH)COLOR_BTNSHADOW;
-    wc.lpszClassName    = "LDmicroDialog";
-    wc.lpszMenuName     = NULL;
-    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
-    wc.hIcon            = (HICON)LoadImage(Instance, MAKEINTRESOURCE(4000),
-                            IMAGE_ICON, 32, 32, 0);
-    wc.hIconSm          = (HICON)LoadImage(Instance, MAKEINTRESOURCE(4000),
-                            IMAGE_ICON, 16, 16, 0);
+    wc.style = CS_BYTEALIGNCLIENT | CS_BYTEALIGNWINDOW | CS_OWNDC | CS_DBLCLKS;
+    wc.lpfnWndProc = (WNDPROC)DialogProc;
+    wc.hInstance = Instance;
+    wc.hbrBackground = (HBRUSH)COLOR_BTNSHADOW;
+    wc.lpszClassName = "LDmicroDialog";
+    wc.lpszMenuName = NULL;
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hIcon = (HICON)LoadImage(Instance, MAKEINTRESOURCE(4000), IMAGE_ICON, 32, 32, 0);
+    wc.hIconSm = (HICON)LoadImage(Instance, MAKEINTRESOURCE(4000), IMAGE_ICON, 16, 16, 0);
 
     RegisterClassEx(&wc);
 
-    MyNiceFont = CreateFont(16, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
-        ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-        FF_DONTCARE, "Tahoma");
+    MyNiceFont = CreateFont(16,
+                            0,
+                            0,
+                            0,
+                            FW_REGULAR,
+                            FALSE,
+                            FALSE,
+                            FALSE,
+                            ANSI_CHARSET,
+                            OUT_DEFAULT_PRECIS,
+                            CLIP_DEFAULT_PRECIS,
+                            DEFAULT_QUALITY,
+                            FF_DONTCARE,
+                            "Tahoma");
     if(!MyNiceFont)
         MyNiceFont = (HFONT)GetStockObject(SYSTEM_FONT);
 
-    MyFixedFont = CreateFont(14, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
-        ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-        FF_DONTCARE, "Lucida Console");
+    MyFixedFont = CreateFont(14,
+                             0,
+                             0,
+                             0,
+                             FW_REGULAR,
+                             FALSE,
+                             FALSE,
+                             FALSE,
+                             ANSI_CHARSET,
+                             OUT_DEFAULT_PRECIS,
+                             CLIP_DEFAULT_PRECIS,
+                             DEFAULT_QUALITY,
+                             FF_DONTCARE,
+                             "Lucida Console");
     if(!MyFixedFont)
         MyFixedFont = (HFONT)GetStockObject(SYSTEM_FONT);
 }
@@ -347,6 +363,7 @@ void MakeDialogBoxClass(void)
 //-----------------------------------------------------------------------------
 const char *IoTypeToString(int ioType)
 {
+    // clang-format off
     switch(ioType) {
         case IO_TYPE_INT_INPUT:         return _("INT input");
         case IO_TYPE_DIG_INPUT:         return _("digital in");
@@ -382,6 +399,7 @@ const char *IoTypeToString(int ioType)
         case IO_TYPE_MCU_REG:           return _("MCU register");
         default:                        return _("<corrupt!>");
     }
+    // clang-format on
 }
 
 //-----------------------------------------------------------------------------
@@ -392,7 +410,8 @@ const char *IoTypeToString(int ioType)
 //-----------------------------------------------------------------------------
 void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pinName)
 {
-    if(!dest) return;
+    if(!dest)
+        return;
 
     strcpy(dest, "");
     if(portName)
@@ -400,18 +419,21 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pi
     if(pinName)
         strcpy(pinName, "");
 
-    if(!Prog.mcu) return;
-    if(!io) return;
+    if(!Prog.mcu)
+        return;
+    if(!io)
+        return;
 
-    int type = io->type;
-    int pin = io->pin;
+    int           type = io->type;
+    int           pin = io->pin;
     McuIoPinInfo *iop;
-    if(type == IO_TYPE_DIG_INPUT || type == IO_TYPE_DIG_OUTPUT
-    || type == IO_TYPE_SPI_MOSI
-    || type == IO_TYPE_SPI_MISO
-    || type == IO_TYPE_SPI_SCK
-    || type == IO_TYPE_SPI__SS
-    || type == IO_TYPE_READ_ADC)
+    if(type == IO_TYPE_DIG_INPUT     //
+       || type == IO_TYPE_DIG_OUTPUT //
+       || type == IO_TYPE_SPI_MOSI   //
+       || type == IO_TYPE_SPI_MISO   //
+       || type == IO_TYPE_SPI_SCK    //
+       || type == IO_TYPE_SPI__SS    //
+       || type == IO_TYPE_READ_ADC)  //
     {
         if(pin == NO_PIN_ASSIGNED) {
             strcpy(dest, _("(not assigned)"));
@@ -425,9 +447,7 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pi
             sprintf(dest, "%d", pin);
             if(portName) {
                 if(UartFunctionUsed() && Prog.mcu) {
-                    if((Prog.mcu->uartNeeds.rxPin == pin) ||
-                       (Prog.mcu->uartNeeds.txPin == pin))
-                    {
+                    if((Prog.mcu->uartNeeds.rxPin == pin) || (Prog.mcu->uartNeeds.txPin == pin)) {
                         strcpy(portName, _("<UART needs!>"));
                         return;
                     }
@@ -451,19 +471,16 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pi
                 iop = PinInfo(pin);
                 if(iop && Prog.mcu)
                     if(Prog.mcu->core == PC_LPT_COM)
-                    ;//  sprintf(portName, "%c%dP%d",
-                     //      Prog.mcu->portPrefix, iop->portN, iop->portPin);
+                        ;   //  sprintf(portName, "%c%dP%d",
+                            //      Prog.mcu->portPrefix, iop->portN, iop->portPin);
                     else
-                        sprintf(portName, "%c%c%d",
-                            Prog.mcu->portPrefix, iop->port, iop->bit);
+                        sprintf(portName, "%c%c%d", Prog.mcu->portPrefix, iop->port, iop->bit);
                 else
                     strcpy(portName, _("<not an I/O!>"));
             }
             if(pinName) {
                 if(UartFunctionUsed() && Prog.mcu) {
-                    if((Prog.mcu->uartNeeds.rxPin == pin) ||
-                       (Prog.mcu->uartNeeds.txPin == pin))
-                    {
+                    if((Prog.mcu->uartNeeds.rxPin == pin) || (Prog.mcu->uartNeeds.txPin == pin)) {
                         strcpy(pinName, _("<UART needs!>"));
                         return;
                     }
@@ -487,7 +504,7 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pi
                 iop = PinInfo(pin);
                 if(iop && Prog.mcu) {
                     if((iop->pinName) && strlen(iop->pinName))
-                      sprintf(pinName, "%s", iop->pinName);
+                        sprintf(pinName, "%s", iop->pinName);
                 } else
                     strcpy(pinName, _("<not an I/O!>"));
             }
@@ -506,8 +523,7 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pi
             iop = PinInfo(pin);
             if(iop) {
                 if(portName)
-                    sprintf(portName, "%c%c%d",
-                        Prog.mcu->portPrefix, iop->port, iop->bit);
+                    sprintf(portName, "%c%c%d", Prog.mcu->portPrefix, iop->port, iop->bit);
                 if(iop->pinName)
                     sprintf(pinName, "%s", iop->pinName);
             } else {
@@ -533,9 +549,8 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pi
             iop = PinInfo(Prog.mcu->uartNeeds.txPin);
             if(iop) {
                 if(portName)
-                    sprintf(portName, "%c%c%d",
-                      Prog.mcu->portPrefix, iop->port, iop->bit);
-                 if(pinName)
+                    sprintf(portName, "%c%c%d", Prog.mcu->portPrefix, iop->port, iop->bit);
+                if(pinName)
                     if(iop->pinName)
                         sprintf(pinName, "%s", iop->pinName);
             } else {
@@ -561,9 +576,8 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pi
             iop = PinInfo(Prog.mcu->uartNeeds.rxPin);
             if(iop) {
                 if(portName)
-                    sprintf(portName, "%c%c%d",
-                      Prog.mcu->portPrefix, iop->port, iop->bit);
-                 if(pinName)
+                    sprintf(portName, "%c%c%d", Prog.mcu->portPrefix, iop->port, iop->bit);
+                if(pinName)
                     if(iop->pinName)
                         sprintf(pinName, "%s", iop->pinName);
             } else {
@@ -591,26 +605,23 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pi
             if(iop) {
                 if(portName)
                     if(UartFunctionUsed() && Prog.mcu) {
-                        if((Prog.mcu->uartNeeds.rxPin == pin) ||
-                           (Prog.mcu->uartNeeds.txPin == pin))
-                        {
+                        if((Prog.mcu->uartNeeds.rxPin == pin) || //
+                           (Prog.mcu->uartNeeds.txPin == pin)) {
                             strcpy(portName, _("<UART needs!>"));
                             return;
                         }
                     }
-                    sprintf(portName, "%c%c%d",
-                      Prog.mcu->portPrefix, iop->port, iop->bit);
+                sprintf(portName, "%c%c%d", Prog.mcu->portPrefix, iop->port, iop->bit);
                 if(pinName)
                     if(UartFunctionUsed() && Prog.mcu) {
-                        if((Prog.mcu->uartNeeds.rxPin == pin) ||
-                           (Prog.mcu->uartNeeds.txPin == pin))
-                        {
+                        if((Prog.mcu->uartNeeds.rxPin == pin) || //
+                           (Prog.mcu->uartNeeds.txPin == pin)) {
                             strcpy(pinName, _("<UART needs!>"));
                             return;
                         }
                     }
-                    if(iop->pinName)
-                        sprintf(pinName, "%s", iop->pinName);
+                if(iop->pinName)
+                    sprintf(pinName, "%s", iop->pinName);
             } else {
                 /*
                 if(portName)
@@ -622,14 +633,13 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io, char *portName, char *pi
         }
 #else
         int pin = io->pin;
-        if (pin == NO_PIN_ASSIGNED) {
+        if(pin == NO_PIN_ASSIGNED) {
             strcpy(dest, _("(not assigned)"));
-        }
-        else {
+        } else {
             sprintf(dest, "%d", pin);
         }
 #endif
-    //} else if((type == IO_TYPE_STRING)) {
+        //} else if((type == IO_TYPE_STRING)) {
     }
 }
 
@@ -638,8 +648,8 @@ static int ComparePin(const void *av, const void *bv)
 {
     McuIoPinInfo *a = (McuIoPinInfo *)av;
     McuIoPinInfo *b = (McuIoPinInfo *)bv;
-    char sa[MAX_NAME_LEN];
-    char sb[MAX_NAME_LEN];
+    char          sa[MAX_NAME_LEN];
+    char          sb[MAX_NAME_LEN];
     if(strlen(a->pinName))
         strcpy(sa, a->pinName);
     else
@@ -664,20 +674,19 @@ char *GetPinName(int pin, char *pinName)
     sprintf(pinName, "");
     int i;
     if(Prog.mcu)
-    if(pin != NO_PIN_ASSIGNED)
-    for(i = 0; i < Prog.mcu->pinCount; i++)
-        if(Prog.mcu->pinInfo[i].pin==pin)
-            if(Prog.mcu && (Prog.mcu->portPrefix == 'L') && (Prog.io.assignment[i].pin))
-                sprintf(pinName, "%s",
-                    PinToName(Prog.io.assignment[i].pin));
-            else
-                if((Prog.mcu->pinInfo[i].pinName) && strlen(Prog.mcu->pinInfo[i].pinName))
-                  sprintf(pinName, "%s", Prog.mcu->pinInfo[i].pinName);
-                else
-                  sprintf(pinName, "%c%c%d",
-                    Prog.mcu->portPrefix,
-                    Prog.mcu->pinInfo[i].port,
-                    Prog.mcu->pinInfo[i].bit);
+        if(pin != NO_PIN_ASSIGNED)
+            for(i = 0; i < Prog.mcu->pinCount; i++)
+                if(Prog.mcu->pinInfo[i].pin == pin)
+                    if(Prog.mcu && (Prog.mcu->portPrefix == 'L') && (Prog.io.assignment[i].pin))
+                        sprintf(pinName, "%s", PinToName(Prog.io.assignment[i].pin));
+                    else if((Prog.mcu->pinInfo[i].pinName) && strlen(Prog.mcu->pinInfo[i].pinName))
+                        sprintf(pinName, "%s", Prog.mcu->pinInfo[i].pinName);
+                    else
+                        sprintf(pinName,
+                                "%c%c%d",
+                                Prog.mcu->portPrefix,
+                                Prog.mcu->pinInfo[i].port,
+                                Prog.mcu->pinInfo[i].bit);
     return pinName;
 }
 
@@ -691,9 +700,9 @@ void PinNumberForIo(char *dest, PlcProgramSingleIo *io)
 const char *ArduinoPinName(McuIoPinInfo *iop)
 {
     if(iop)
-      if(iop->ArduinoName)
-        if(strlen(iop->ArduinoName))
-          return iop->ArduinoName;
+        if(iop->ArduinoName)
+            if(strlen(iop->ArduinoName))
+                return iop->ArduinoName;
     return "-1";
 }
 
@@ -702,9 +711,9 @@ int NameToPin(char *pinName)
 {
     int i;
     if(Prog.mcu)
-       for(i = 0; i < Prog.mcu->pinCount; i++)
-           if(strcmp(Prog.mcu->pinInfo[i].pinName,pinName)==0)
-               return Prog.mcu->pinInfo[i].pin;
+        for(i = 0; i < Prog.mcu->pinCount; i++)
+            if(strcmp(Prog.mcu->pinInfo[i].pinName, pinName) == 0)
+                return Prog.mcu->pinInfo[i].pin;
     return 0;
 }
 //-----------------------------------------------------------------------------
@@ -713,7 +722,7 @@ const char *PinToName(int pin)
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.mcu->pinCount; i++)
-            if(Prog.mcu->pinInfo[i].pin==pin)
+            if(Prog.mcu->pinInfo[i].pin == pin)
                 return Prog.mcu->pinInfo[i].pinName;
     return "";
 }
@@ -723,7 +732,7 @@ McuIoPinInfo *PinInfo(int pin)
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.mcu->pinCount; i++)
-            if(Prog.mcu->pinInfo[i].pin==pin)
+            if(Prog.mcu->pinInfo[i].pin == pin)
                 return &(Prog.mcu->pinInfo[i]);
     return NULL;
 }
@@ -734,7 +743,7 @@ McuIoPinInfo *PinInfoForName(const char *name)
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.io.count; i++)
-            if(strcmp(Prog.io.assignment[i].name, name)==0)
+            if(strcmp(Prog.io.assignment[i].name, name) == 0)
                 return PinInfo(Prog.io.assignment[i].pin);
     return NULL;
 }
@@ -745,7 +754,7 @@ McuPwmPinInfo *PwmPinInfo(int pin)
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.mcu->pwmCount; i++)
-            if(Prog.mcu->pwmInfo[i].pin==pin)
+            if(Prog.mcu->pwmInfo[i].pin == pin)
                 return &(Prog.mcu->pwmInfo[i]);
     return NULL;
 }
@@ -755,7 +764,7 @@ McuPwmPinInfo *PwmPinInfo(int pin, int timer) // !=timer !!!
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.mcu->pwmCount; i++)
-            if((Prog.mcu->pwmInfo[i].pin==pin) && (Prog.mcu->pwmInfo[i].timer!=timer))
+            if((Prog.mcu->pwmInfo[i].pin == pin) && (Prog.mcu->pwmInfo[i].timer != timer))
                 return &(Prog.mcu->pwmInfo[i]);
     return NULL;
 }
@@ -765,7 +774,8 @@ McuPwmPinInfo *PwmPinInfo(int pin, int timer, int resolution) // !=timer !!!
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.mcu->pwmCount; i++)
-            if((Prog.mcu->pwmInfo[i].pin==pin) && (Prog.mcu->pwmInfo[i].timer!=timer) && (Prog.mcu->pwmInfo[i].resolution==resolution))
+            if((Prog.mcu->pwmInfo[i].pin == pin) && (Prog.mcu->pwmInfo[i].timer != timer)
+               && (Prog.mcu->pwmInfo[i].resolution == resolution))
                 return &(Prog.mcu->pwmInfo[i]);
     return NULL;
 }
@@ -776,7 +786,7 @@ McuSpiInfo *GetMcuSpiInfo(char *name)
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.mcu->spiCount; i++)
-            if(strcmp(Prog.mcu->spiInfo[i].name, name)==0)
+            if(strcmp(Prog.mcu->spiInfo[i].name, name) == 0)
                 return &(Prog.mcu->spiInfo[i]);
     return NULL;
 }
@@ -787,7 +797,7 @@ McuPwmPinInfo *PwmPinInfoForName(char *name)
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.io.count; i++) {
-            if(strcmp(Prog.io.assignment[i].name, name)==0)
+            if(strcmp(Prog.io.assignment[i].name, name) == 0)
                 return PwmPinInfo(Prog.io.assignment[i].pin);
         }
     return NULL;
@@ -798,7 +808,7 @@ McuPwmPinInfo *PwmPinInfoForName(char *name, int timer) // !=timer !!!
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.io.count; i++) {
-            if(strcmp(Prog.io.assignment[i].name, name)==0) {
+            if(strcmp(Prog.io.assignment[i].name, name) == 0) {
                 return PwmPinInfo(Prog.io.assignment[i].pin, timer);
             }
         }
@@ -810,7 +820,7 @@ McuPwmPinInfo *PwmPinInfoForName(char *name, int timer, int resolution) // !=tim
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.io.count; i++) {
-            if(strcmp(Prog.io.assignment[i].name, name)==0)
+            if(strcmp(Prog.io.assignment[i].name, name) == 0)
                 return PwmPinInfo(Prog.io.assignment[i].pin, timer, resolution);
         }
     return NULL;
@@ -822,7 +832,7 @@ McuAdcPinInfo *AdcPinInfo(int pin)
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.mcu->adcCount; i++)
-            if(Prog.mcu->adcInfo[i].pin==pin)
+            if(Prog.mcu->adcInfo[i].pin == pin)
                 return &(Prog.mcu->adcInfo[i]);
     return NULL;
 }
@@ -833,7 +843,7 @@ McuAdcPinInfo *AdcPinInfoForName(char *name)
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.io.count; i++)
-            if(strcmp(Prog.io.assignment[i].name, name)==0)
+            if(strcmp(Prog.io.assignment[i].name, name) == 0)
                 return AdcPinInfo(Prog.io.assignment[i].pin);
     return NULL;
 }
@@ -844,7 +854,7 @@ BOOL IsExtIntPin(int pin)
     int i;
     if(Prog.mcu)
         for(i = 0; i < Prog.mcu->ExtIntCount; i++)
-            if(Prog.mcu->ExtIntInfo[i].pin==pin)
+            if(Prog.mcu->ExtIntInfo[i].pin == pin)
                 return TRUE;
     return FALSE;
 }
@@ -852,7 +862,7 @@ BOOL IsExtIntPin(int pin)
 //-----------------------------------------------------------------------------
 int ishobdigit(int c)
 {
-    if((isxdigit(c)) || (toupper(c)=='X') || (toupper(c)=='O')/* || (toupper(c)=='B')*/)
+    if((isxdigit(c)) || (toupper(c) == 'X') || (toupper(c) == 'O') /* || (toupper(c)=='B')*/)
         return 1;
     return 0;
 }
@@ -883,17 +893,18 @@ int isname(char *name)
 //-----------------------------------------------------------------------------
 size_t strlenalnum(const char *str)
 {
-    size_t r=0;
-    if(str) r=strlen(str);
+    size_t r = 0;
+    if(str)
+        r = strlen(str);
     if(r) {
         while(*str) {
             if(isdigit(*str) || isalpha(*str))
                 break;
             str++;
         }
-        r=strlen(str);
+        r = strlen(str);
         while(r) {
-            if(isdigit(str[r-1]) || isalpha(str[r-1]))
+            if(isdigit(str[r - 1]) || isalpha(str[r - 1]))
                 break;
             r--;
         }
@@ -904,7 +915,7 @@ size_t strlenalnum(const char *str)
 //-----------------------------------------------------------------------------
 void CopyBit(DWORD *Dest, int bitDest, DWORD Src, int bitSrc)
 {
-    if(Src & (1<<bitSrc))
+    if(Src & (1 << bitSrc))
         *Dest |= 1 << bitDest;
     else
         *Dest &= ~(1 << bitDest);
@@ -933,12 +944,13 @@ char *strDelSpace(char *dest)
 
 char *strncpyn(char *s1, const char *s2, size_t n)
 {
-    if(!s1) oops();
+    if(!s1)
+        oops();
     if(s2) {
         if(strlen(s2) < n) {
             strcpy(s1, s2);
         } else {
-            strncpy(s1, s2, n-1);
+            strncpy(s1, s2, n - 1);
             s1[n] = '\0';
         }
     }
@@ -947,12 +959,13 @@ char *strncpyn(char *s1, const char *s2, size_t n)
 
 char *strncatn(char *s1, const char *s2, size_t n)
 {
-    if(!s1) oops();
+    if(!s1)
+        oops();
     if(s2) {
         if((strlen(s1) + strlen(s2)) < n) {
             strcat(s1, s2);
         } else {
-            strncat(s1, s2, n-1-strlen(s1));
+            strncat(s1, s2, n - 1 - strlen(s1));
             s1[n] = '\0';
         }
     }
@@ -961,7 +974,8 @@ char *strncatn(char *s1, const char *s2, size_t n)
 
 char *toupperstr(char *dest)
 {
-    if(!dest) oops();
+    if(!dest)
+        oops();
     while(*dest) {
         dest[0] = toupper(dest[0]);
         dest++;
@@ -971,8 +985,10 @@ char *toupperstr(char *dest)
 
 char *toupperstr(char *dest, const char *src)
 {
-    if(!dest) oops();
-    if(!src) oops();
+    if(!dest)
+        oops();
+    if(!src)
+        oops();
     while(*src) {
         dest[0] = toupper(src[0]);
         dest++;
@@ -987,16 +1003,16 @@ void getResolution(char *s, int *resol, int *TOP)
     *resol = 7; // 0-100% (6.7 bit)
     *TOP = 0xFF;
     if(strlen(s)) {
-        if(strstr(s,"0-1024")) {
+        if(strstr(s, "0-1024")) {
             *resol = 10; // bit
             *TOP = 0x3FF;
-        } else if(strstr(s,"0-512")) {
+        } else if(strstr(s, "0-512")) {
             *resol = 9; // bit
             *TOP = 0x1FF;
-        } else if(strstr(s,"0-256")) {
+        } else if(strstr(s, "0-256")) {
             *resol = 8; // bit
             *TOP = 0xFF;
-        } else if(strstr(s,"0-100")) {
+        } else if(strstr(s, "0-100")) {
             *resol = 7; // 0-100% (6.7 bit)
             *TOP = 0xFF;
         }

@@ -407,7 +407,7 @@ static void ExtractNamesFromCircuit(int which, void *any)
         case ELEM_SEED_RANDOM: {
             sprintf(str, "$seed_%s", l->d.move.dest);
             AppendIo(str, IO_TYPE_GENERAL);
-            break;        
+            break;
         }
 
         case ELEM_SPI: {
@@ -505,9 +505,9 @@ static void ExtractNamesFromCircuit(int which, void *any)
             if(CheckForNumber(l->d.math.op1) == FALSE) {
                 AppendIoAutoType(l->d.math.op1, IO_TYPE_GENERAL);
             }
-            if (which != ELEM_NOT)
+            if((which != ELEM_NOT)
             && (which != ELEM_NEG)
-            && (CheckForNumber(l->d.math.op2) == FALSE) {
+            && (CheckForNumber(l->d.math.op2) == FALSE)) {
                 AppendIoAutoType(l->d.math.op2, IO_TYPE_GENERAL);
             }
             AppendIoAutoType(l->d.math.dest, IO_TYPE_GENERAL);

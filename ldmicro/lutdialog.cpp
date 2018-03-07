@@ -64,7 +64,8 @@ static LRESULT CALLBACK MyNumberProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     }
 
     WNDPROC w;
-    for(int i = 0; i < MAX_LOOK_UP_TABLE_LEN; i++) {
+    int     i;
+    for(i = 0; i < MAX_LOOK_UP_TABLE_LEN; i++) {
         if(hwnd == ValuesTextbox[i]) {
             w = (WNDPROC)PrevValuesProc[i];
             break;
@@ -493,7 +494,7 @@ void ShowLookUpTableDialog(ElemLeaf *l)
     // we need our own local copy of the table entries, because it would be
     // bad to update those in the leaf before the user clicks okay (as he
     // might cancel).
-    int count = t->count;
+    int  count = t->count;
     BOOL asString = t->editAsString;
     memset(ValuesCache, 0, sizeof(ValuesCache));
     int i;
@@ -537,7 +538,7 @@ void ShowLookUpTableDialog(ElemLeaf *l)
 
     char PrevTableAsString[1024] = "";
 
-    MSG msg;
+    MSG   msg;
     DWORD ret;
     DialogDone = FALSE;
     DialogCancel = FALSE;
@@ -566,7 +567,7 @@ void ShowLookUpTableDialog(ElemLeaf *l)
             int newcount = atoi(buf);
             if(newcount < 0 || newcount > (MAX_LOOK_UP_TABLE_LEN)) {
                 newcount = count;
-                SendMessage(CountTextbox, WM_SETTEXT, 0, (LPARAM)"");
+                SendMessage(CountTextbox, WM_SETTEXT, 0, (LPARAM) "");
             } else
                 count = atoi(buf);
             DestroyLutControls();
@@ -578,7 +579,7 @@ void ShowLookUpTableDialog(ElemLeaf *l)
         if(asString) {
             char scratch[1024];
             SendMessage(StringTextbox, WM_GETTEXT, (WPARAM)(sizeof(scratch) - 1), (LPARAM)scratch);
-            if(strcmp(scratch, PrevTableAsString)!=0) {
+            if(strcmp(scratch, PrevTableAsString) != 0) {
                 if(StringToValuesCache(scratch, &count)) {
                     strcpy(PrevTableAsString, scratch);
                 } else {
@@ -589,19 +590,18 @@ void ShowLookUpTableDialog(ElemLeaf *l)
         }
 
         // Did we just change modes?
-        BOOL x = SendMessage(AsStringCheckbox, BM_GETCHECK, 0, 0)==BST_CHECKED;
+        BOOL x = SendMessage(AsStringCheckbox, BM_GETCHECK, 0, 0) == BST_CHECKED;
         if((x && !asString) || (!x && asString)) {
             asString = x;
             DestroyLutControls();
             MakeLutControls(asString, count, FALSE);
         }
-
     }
 
     if(!DialogCancel) {
-        SendMessage(NameTextbox, WM_GETTEXT, (WPARAM)16/*(MAX_NAME_LEN-1)*/, (LPARAM)(t->name));
-        SendMessage(DestTextbox, WM_GETTEXT, (WPARAM)16/*(MAX_NAME_LEN-1)*/, (LPARAM)(t->dest));
-        SendMessage(IndexTextbox, WM_GETTEXT, (WPARAM)16/*(MAX_NAME_LEN-1)*/, (LPARAM)(t->index));
+        SendMessage(NameTextbox, WM_GETTEXT, (WPARAM)16 /*(MAX_NAME_LEN-1)*/, (LPARAM)(t->name));
+        SendMessage(DestTextbox, WM_GETTEXT, (WPARAM)16 /*(MAX_NAME_LEN-1)*/, (LPARAM)(t->dest));
+        SendMessage(IndexTextbox, WM_GETTEXT, (WPARAM)16 /*(MAX_NAME_LEN-1)*/, (LPARAM)(t->index));
         DestroyLutControls();
         // The call to DestroyLutControls updated ValuesCache, so just read
         // them out of there (whichever mode we were in before).
@@ -633,7 +633,7 @@ void ShowPiecewiseLinearDialog(ElemLeaf *l)
     int count = t->count;
     memset(ValuesCache, 0, sizeof(ValuesCache));
     int i;
-    for(i = 0; i < count*2; i++) {
+    for(i = 0; i < count * 2; i++) {
         ValuesCache[i] = t->vals[i];
     }
 
@@ -652,7 +652,7 @@ void ShowPiecewiseLinearDialog(ElemLeaf *l)
                                    Instance,
                                    NULL);
     MakeFixedControls(TRUE);
-    MakeLutControls(FALSE, count*2, TRUE);
+    MakeLutControls(FALSE, count * 2, TRUE);
 
     // Set up the controls to reflect the initial configuration.
     SendMessage(NameTextbox, WM_SETTEXT, 0, (LPARAM)(t->name));
@@ -668,7 +668,7 @@ void ShowPiecewiseLinearDialog(ElemLeaf *l)
     SetFocus(NameTextbox);
     SendMessage(NameTextbox, EM_SETSEL, 0, -1);
 
-    MSG msg;
+    MSG   msg;
     DWORD ret;
     DialogDone = FALSE;
     DialogCancel = FALSE;
@@ -702,25 +702,25 @@ void ShowPiecewiseLinearDialog(ElemLeaf *l)
             }
             */
             int newcount = atoi(buf);
-            if(newcount < 0 || newcount > (MAX_LOOK_UP_TABLE_LEN/2)) {
+            if(newcount < 0 || newcount > (MAX_LOOK_UP_TABLE_LEN / 2)) {
                 newcount = count;
-                SendMessage(CountTextbox, WM_SETTEXT, 0, (LPARAM)"");
+                SendMessage(CountTextbox, WM_SETTEXT, 0, (LPARAM) "");
             } else
                 count = atoi(buf);
             DestroyLutControls();
-            MakeLutControls(FALSE, count*2, TRUE);
+            MakeLutControls(FALSE, count * 2, TRUE);
         }
     }
 
     if(!DialogCancel) {
-        SendMessage(NameTextbox, WM_GETTEXT, (WPARAM)16/*(MAX_NAME_LEN-1)*/, (LPARAM)(t->name));
-        SendMessage(DestTextbox, WM_GETTEXT, (WPARAM)16/*(MAX_NAME_LEN-1)*/, (LPARAM)(t->dest));
-        SendMessage(IndexTextbox, WM_GETTEXT, (WPARAM)16/*(MAX_NAME_LEN-1)*/, (LPARAM)(t->index));
+        SendMessage(NameTextbox, WM_GETTEXT, (WPARAM)16 /*(MAX_NAME_LEN-1)*/, (LPARAM)(t->name));
+        SendMessage(DestTextbox, WM_GETTEXT, (WPARAM)16 /*(MAX_NAME_LEN-1)*/, (LPARAM)(t->dest));
+        SendMessage(IndexTextbox, WM_GETTEXT, (WPARAM)16 /*(MAX_NAME_LEN-1)*/, (LPARAM)(t->index));
         DestroyLutControls();
         // The call to DestroyLutControls updated ValuesCache, so just read
         // them out of there.
         int i;
-        for(i = 0; i < count*2; i++) {
+        for(i = 0; i < count * 2; i++) {
             t->vals[i] = ValuesCache[i];
         }
         t->count = count;

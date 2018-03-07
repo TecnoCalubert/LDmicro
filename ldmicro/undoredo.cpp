@@ -52,7 +52,7 @@ static struct {
 //-----------------------------------------------------------------------------
 static void *DeepCopy(int which, void *any)
 {
-    switch (which) {
+    switch(which) {
         CASE_LEAF
         {
             ElemLeaf *l = AllocLeaf();
@@ -65,7 +65,7 @@ static void *DeepCopy(int which, void *any)
             ElemSubcktSeries *n = AllocSubcktSeries();
             ElemSubcktSeries *s = (ElemSubcktSeries *)any;
             n->count = s->count;
-            for (i = 0; i < s->count; i++) {
+            for(i = 0; i < s->count; i++) {
                 n->contents[i].which = s->contents[i].which;
                 n->contents[i].data.any = DeepCopy(s->contents[i].which, s->contents[i].data.any);
             }
@@ -76,7 +76,7 @@ static void *DeepCopy(int which, void *any)
             ElemSubcktParallel *n = AllocSubcktParallel();
             ElemSubcktParallel *p = (ElemSubcktParallel *)any;
             n->count = p->count;
-            for (i = 0; i < p->count; i++) {
+            for(i = 0; i < p->count; i++) {
                 n->contents[i].which = p->contents[i].which;
                 n->contents[i].data.any = DeepCopy(p->contents[i].which, p->contents[i].data.any);
             }
@@ -95,15 +95,15 @@ static void *DeepCopy(int which, void *any)
 //-----------------------------------------------------------------------------
 static void EmptyProgramStack(ProgramStack *ps)
 {
-    while (ps->count > 0) {
+    while(ps->count > 0) {
         int a = (ps->write - 1);
-        if (a < 0)
+        if(a < 0)
             a += MAX_LEVELS_UNDO;
         ps->write = a;
         (ps->count)--;
 
         int i;
-        for (i = 0; i < ps->prog[ps->write].numRungs; i++) {
+        for(i = 0; i < ps->prog[ps->write].numRungs; i++) {
             FreeCircuit(ELEM_SERIES_SUBCKT, ps->prog[ps->write].rungs[i]);
         }
     }
@@ -115,9 +115,9 @@ static void EmptyProgramStack(ProgramStack *ps)
 //-----------------------------------------------------------------------------
 static void PushProgramStack(ProgramStack *ps, BOOL deepCopy)
 {
-    if (ps->count == MAX_LEVELS_UNDO) {
+    if(ps->count == MAX_LEVELS_UNDO) {
         int i;
-        for (i = 0; i < ps->prog[ps->write].numRungs; i++) {
+        for(i = 0; i < ps->prog[ps->write].numRungs; i++) {
             FreeCircuit(ELEM_SERIES_SUBCKT, ps->prog[ps->write].rungs[i]);
         }
     } else {
@@ -125,15 +125,15 @@ static void PushProgramStack(ProgramStack *ps, BOOL deepCopy)
     }
 
     memcpy(&(ps->prog[ps->write]), &Prog, sizeof(Prog));
-    if (deepCopy) {
+    if(deepCopy) {
         int i;
-        for (i = 0; i < Prog.numRungs; i++) {
+        for(i = 0; i < Prog.numRungs; i++) {
             ps->prog[ps->write].rungs[i] = (ElemSubcktSeries *)DeepCopy(ELEM_SERIES_SUBCKT, Prog.rungs[i]);
         }
     }
 
     int gx, gy;
-    if (FindSelected(&gx, &gy)) {
+    if(FindSelected(&gx, &gy)) {
         ps->cursor[ps->write].gx = gx;
         ps->cursor[ps->write].gy = gy;
     } else {
@@ -142,7 +142,7 @@ static void PushProgramStack(ProgramStack *ps, BOOL deepCopy)
     }
 
     int a = (ps->write + 1);
-    if (a >= MAX_LEVELS_UNDO)
+    if(a >= MAX_LEVELS_UNDO)
         a -= MAX_LEVELS_UNDO;
     ps->write = a;
 }
@@ -154,7 +154,7 @@ static void PushProgramStack(ProgramStack *ps, BOOL deepCopy)
 static void PopProgramStack(ProgramStack *ps)
 {
     int a = (ps->write - 1);
-    if (a < 0)
+    if(a < 0)
         a += MAX_LEVELS_UNDO;
     ps->write = a;
     (ps->count)--;
@@ -185,7 +185,7 @@ void UndoRemember(void)
 //-----------------------------------------------------------------------------
 void UndoUndo(void)
 {
-    if (Undo.undo.count <= 0)
+    if(Undo.undo.count <= 0)
         return;
 
     ForgetEverything();
@@ -193,7 +193,7 @@ void UndoUndo(void)
     PushProgramStack(&(Undo.redo), FALSE);
     PopProgramStack(&(Undo.undo));
 
-    if (Undo.undo.count > 0) {
+    if(Undo.undo.count > 0) {
         SetUndoEnabled(TRUE, TRUE);
     } else {
         SetUndoEnabled(FALSE, TRUE);
@@ -209,7 +209,7 @@ void UndoUndo(void)
 //-----------------------------------------------------------------------------
 void UndoRedo(void)
 {
-    if (Undo.redo.count <= 0)
+    if(Undo.redo.count <= 0)
         return;
 
     ForgetEverything();
@@ -217,7 +217,7 @@ void UndoRedo(void)
     PushProgramStack(&(Undo.undo), FALSE);
     PopProgramStack(&(Undo.redo));
 
-    if (Undo.redo.count > 0) {
+    if(Undo.redo.count > 0) {
         SetUndoEnabled(TRUE, TRUE);
     } else {
         SetUndoEnabled(TRUE, FALSE);

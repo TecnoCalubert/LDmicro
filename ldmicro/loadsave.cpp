@@ -29,11 +29,7 @@ char *FrmStrToStr(char *dest);
 char *DelNL(char *str);
 char *DelLastNL(char *str);
 
-typedef enum FRMTTag {
-    FRMT_COMMENT,
-    FRMT_01,
-    FRMT_x20
-} FRMT;
+typedef enum FRMTTag { FRMT_COMMENT, FRMT_01, FRMT_x20 } FRMT;
 char *StrToFrmStr(char *dest, char *str, FRMT frmt);
 
 ElemSubcktSeries *LoadSeriesFromFile(FILE *f);
@@ -46,257 +42,309 @@ ElemSubcktSeries *LoadSeriesFromFile(FILE *f);
 static BOOL LoadLeafFromFile(char *line, void **any, int *which)
 {
     ElemLeaf *l = AllocLeaf();
-    int x;
+    int       x;
 
-    if(memcmp(line, "COMMENT", 7)==0) {
+    if(memcmp(line, "COMMENT", 7) == 0) {
         FrmStrToStr(l->d.comment.str, &line[8]);
 
         *which = ELEM_COMMENT;
-    } else if(sscanf(line, "CONTACTS %s %d %d", l->d.contacts.name,
-        &l->d.contacts.negated, &l->d.contacts.set1)==3)
-    {
+    } else if(sscanf(line, "CONTACTS %s %d %d", l->d.contacts.name, &l->d.contacts.negated, &l->d.contacts.set1) == 3) {
         *which = ELEM_CONTACTS;
-    } else if(sscanf(line, "CONTACTS %s %d", l->d.contacts.name,
-        &l->d.contacts.negated)==2)
-    {
+    } else if(sscanf(line, "CONTACTS %s %d", l->d.contacts.name, &l->d.contacts.negated) == 2) {
         *which = ELEM_CONTACTS;
-    } else if(sscanf(line, "COIL %s %d %d %d %d", l->d.coil.name,
-        &l->d.coil.negated, &l->d.coil.setOnly, &l->d.coil.resetOnly, &l->d.coil.ttrigger)==5)
-    {
+    } else if(sscanf(line,
+                     "COIL %s %d %d %d %d",
+                     l->d.coil.name,
+                     &l->d.coil.negated,
+                     &l->d.coil.setOnly,
+                     &l->d.coil.resetOnly,
+                     &l->d.coil.ttrigger)
+              == 5) {
         *which = ELEM_COIL;
-    } else if(sscanf(line, "COIL %s %d %d %d", l->d.coil.name,
-        &l->d.coil.negated, &l->d.coil.setOnly, &l->d.coil.resetOnly)==4)
-    {
+    } else if(sscanf(line,
+                     "COIL %s %d %d %d",
+                     l->d.coil.name,
+                     &l->d.coil.negated,
+                     &l->d.coil.setOnly,
+                     &l->d.coil.resetOnly)
+              == 4) {
         *which = ELEM_COIL;
-    } else if(memcmp(line, "PLACEHOLDER", 11)==0) {
+    } else if(memcmp(line, "PLACEHOLDER", 11) == 0) {
         *which = ELEM_PLACEHOLDER;
-    } else if(memcmp(line, "SHORT", 5)==0) {
+    } else if(memcmp(line, "SHORT", 5) == 0) {
         *which = ELEM_SHORT;
-    } else if(memcmp(line, "OPEN", 4)==0) {
+    } else if(memcmp(line, "OPEN", 4) == 0) {
         *which = ELEM_OPEN;
-    } else if(memcmp(line, "MASTER_RELAY", 12)==0) {
+    } else if(memcmp(line, "MASTER_RELAY", 12) == 0) {
         *which = ELEM_MASTER_RELAY;
-    } else if((sscanf(line, "DELAY %s", l->d.timer.name)==1)) {
+    } else if((sscanf(line, "DELAY %s", l->d.timer.name) == 1)) {
         *which = ELEM_DELAY;
-    } else if((sscanf(line, "SLEEP %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "SLEEP %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_SLEEP;
-    } else if(memcmp(line, "SLEEP", 5)==0) {
+    } else if(memcmp(line, "SLEEP", 5) == 0) {
         *which = ELEM_SLEEP;
-    } else if(memcmp(line, "CLRWDT", 6)==0) {
+    } else if(memcmp(line, "CLRWDT", 6) == 0) {
         *which = ELEM_CLRWDT;
-    } else if(memcmp(line, "LOCK", 4)==0) {
+    } else if(memcmp(line, "LOCK", 4) == 0) {
         *which = ELEM_LOCK;
-    } else if(sscanf(line, "GOTO %s", l->d.doGoto.rung)==1) {
+    } else if(sscanf(line, "GOTO %s", l->d.doGoto.rung) == 1) {
         *which = ELEM_GOTO;
-    } else if(sscanf(line, "GOSUB %s", l->d.doGoto.rung)==1) {
+    } else if(sscanf(line, "GOSUB %s", l->d.doGoto.rung) == 1) {
         *which = ELEM_GOSUB;
-    } else if(memcmp(line, "RETURN", 6)==0) {
+    } else if(memcmp(line, "RETURN", 6) == 0) {
         *which = ELEM_RETURN;
-    } else if(sscanf(line, "LABEL %s", l->d.doGoto.rung)==1) {
+    } else if(sscanf(line, "LABEL %s", l->d.doGoto.rung) == 1) {
         *which = ELEM_LABEL;
-    } else if(sscanf(line, "SUBPROG %s", l->d.doGoto.rung)==1) {
+    } else if(sscanf(line, "SUBPROG %s", l->d.doGoto.rung) == 1) {
         *which = ELEM_SUBPROG;
-    } else if(sscanf(line, "ENDSUB %s", l->d.doGoto.rung)==1) {
+    } else if(sscanf(line, "ENDSUB %s", l->d.doGoto.rung) == 1) {
         *which = ELEM_ENDSUB;
-    } else if(sscanf(line, "SHIFT_REGISTER %s %d", l->d.shiftRegister.name,
-        &(l->d.shiftRegister.stages))==2)
-    {
+    } else if(sscanf(line, "SHIFT_REGISTER %s %d", l->d.shiftRegister.name, &(l->d.shiftRegister.stages)) == 2) {
         *which = ELEM_SHIFT_REGISTER;
-    } else if(memcmp(line, "OSR", 3)==0) {
+    } else if(memcmp(line, "OSR", 3) == 0) {
         *which = ELEM_ONE_SHOT_RISING;
-    } else if(memcmp(line, "OSF", 3)==0) {
+    } else if(memcmp(line, "OSF", 3) == 0) {
         *which = ELEM_ONE_SHOT_FALLING;
-    } else if(memcmp(line, "OSL", 3)==0) {
+    } else if(memcmp(line, "OSL", 3) == 0) {
         *which = ELEM_ONE_SHOT_LOW;
-    } else if(memcmp(line, "OSC", 3)==0) {
+    } else if(memcmp(line, "OSC", 3) == 0) {
         *which = ELEM_OSC;
-    } else if(memcmp(line, "NPULSE_OFF",10)==0) {
+    } else if(memcmp(line, "NPULSE_OFF", 10) == 0) {
         *which = ELEM_NPULSE_OFF;
-    } else if((sscanf(line, "TIME2COUNT %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "TIME2COUNT %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_TIME2COUNT;
-    } else if((sscanf(line, "TIME2DELAY %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "TIME2DELAY %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_TIME2DELAY;
 
-    } else if((sscanf(line, "TON %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust)==3)) {
+    } else if((sscanf(line, "TON %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust) == 3)) {
         *which = ELEM_TON;
-    } else if((sscanf(line, "TOF %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust)==3)) {
+    } else if((sscanf(line, "TOF %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust) == 3)) {
         *which = ELEM_TOF;
-    } else if((sscanf(line, "RTO %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust)==3)) {
+    } else if((sscanf(line, "RTO %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust) == 3)) {
         *which = ELEM_RTO;
-    } else if((sscanf(line, "RTL %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust)==3)) {
+    } else if((sscanf(line, "RTL %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust) == 3)) {
         *which = ELEM_RTL;
-    } else if((sscanf(line, "TCY %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust)==3)) {
+    } else if((sscanf(line, "TCY %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust) == 3)) {
         *which = ELEM_TCY;
-    } else if((sscanf(line, "THI %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust)==3)) {
+    } else if((sscanf(line, "THI %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust) == 3)) {
         *which = ELEM_THI;
-    } else if((sscanf(line, "TLO %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust)==3)) {
+    } else if((sscanf(line, "TLO %s %d %d", l->d.timer.name, &l->d.timer.delay, &l->d.timer.adjust) == 3)) {
         *which = ELEM_TLO;
 
-    } else if((sscanf(line, "TON %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "TON %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_TON;
-        if(strcmp(Prog.LDversion,"0.1")==0)
+        if(strcmp(Prog.LDversion, "0.1") == 0)
             l->d.timer.adjust = -1;
         else
             l->d.timer.adjust = 0;
-    } else if((sscanf(line, "TOF %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "TOF %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_TOF;
-        if(strcmp(Prog.LDversion,"0.1")==0)
+        if(strcmp(Prog.LDversion, "0.1") == 0)
             l->d.timer.adjust = -1;
         else
             l->d.timer.adjust = 0;
-    } else if((sscanf(line, "RTO %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "RTO %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_RTO;
-        if(strcmp(Prog.LDversion,"0.1")==0)
+        if(strcmp(Prog.LDversion, "0.1") == 0)
             l->d.timer.adjust = -1;
         else
             l->d.timer.adjust = 0;
-    } else if((sscanf(line, "RTL %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "RTL %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_RTL;
         l->d.timer.adjust = 0;
-    } else if((sscanf(line, "TCY %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "TCY %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_TCY;
         l->d.timer.adjust = 0;
-    } else if((sscanf(line, "THI %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "THI %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_THI;
         l->d.timer.adjust = 0;
-    } else if((sscanf(line, "TLO %s %d", l->d.timer.name, &l->d.timer.delay)==2)) {
+    } else if((sscanf(line, "TLO %s %d", l->d.timer.name, &l->d.timer.delay) == 2)) {
         *which = ELEM_TLO;
         l->d.timer.adjust = 0;
 
-    } else if((sscanf(line, "CTR %s %s %s", l->d.counter.name, l->d.counter.max, l->d.counter.init)==3)) {
+    } else if((sscanf(line, "CTR %s %s %s", l->d.counter.name, l->d.counter.max, l->d.counter.init) == 3)) {
         *which = ELEM_CTR;
-    } else if((sscanf(line, "CTC %s %s %s", l->d.counter.name, l->d.counter.max, l->d.counter.init)==3)) {
+    } else if((sscanf(line, "CTC %s %s %s", l->d.counter.name, l->d.counter.max, l->d.counter.init) == 3)) {
         *which = ELEM_CTC;
-    } else if((sscanf(line, "CTU %s %s %s", l->d.counter.name, l->d.counter.max, l->d.counter.init)==3)) {
+    } else if((sscanf(line, "CTU %s %s %s", l->d.counter.name, l->d.counter.max, l->d.counter.init) == 3)) {
         *which = ELEM_CTU;
-    } else if((sscanf(line, "CTD %s %s %s", l->d.counter.name, l->d.counter.max, l->d.counter.init)==3)) {
+    } else if((sscanf(line, "CTD %s %s %s", l->d.counter.name, l->d.counter.max, l->d.counter.init) == 3)) {
         *which = ELEM_CTD;
 
-    } else if((sscanf(line, "CTD %s %s", l->d.counter.name, l->d.counter.max)==2)) {
-        strcpy(l->d.counter.init,"0");
+    } else if((sscanf(line, "CTD %s %s", l->d.counter.name, l->d.counter.max) == 2)) {
+        strcpy(l->d.counter.init, "0");
         *which = ELEM_CTD;
-    } else if((sscanf(line, "CTU %s %s", l->d.counter.name, l->d.counter.max)==2)) {
-        strcpy(l->d.counter.init,"0");
+    } else if((sscanf(line, "CTU %s %s", l->d.counter.name, l->d.counter.max) == 2)) {
+        strcpy(l->d.counter.init, "0");
         *which = ELEM_CTU;
-    } else if((sscanf(line, "CTC %s %s", l->d.counter.name, l->d.counter.max)==2)) {
-        strcpy(l->d.counter.init,"0");
+    } else if((sscanf(line, "CTC %s %s", l->d.counter.name, l->d.counter.max) == 2)) {
+        strcpy(l->d.counter.init, "0");
         *which = ELEM_CTC;
 
-    } else if(sscanf(line, "RES %s", l->d.reset.name)==1) {
+    } else if(sscanf(line, "RES %s", l->d.reset.name) == 1) {
         *which = ELEM_RES;
 
-    } else if(sscanf(line, "MOVE %s %s", l->d.move.dest, l->d.move.src)==2) {
+    } else if(sscanf(line, "MOVE %s %s", l->d.move.dest, l->d.move.src) == 2) {
         *which = ELEM_MOVE;
 
-    } else if(sscanf(line, "BIN2BCD %s %s", l->d.move.dest, l->d.move.src)==2) {
+    } else if(sscanf(line, "BIN2BCD %s %s", l->d.move.dest, l->d.move.src) == 2) {
         *which = ELEM_BIN2BCD;
 
-    } else if(sscanf(line, "BCD2BIN %s %s", l->d.move.dest, l->d.move.src)==2) {
+    } else if(sscanf(line, "BCD2BIN %s %s", l->d.move.dest, l->d.move.src) == 2) {
         *which = ELEM_BCD2BIN;
 
-    } else if(sscanf(line, "OPPOSITE %s %s", l->d.move.dest, l->d.move.src)==2) {
+    } else if(sscanf(line, "OPPOSITE %s %s", l->d.move.dest, l->d.move.src) == 2) {
         *which = ELEM_OPPOSITE;
 
-    } else if(sscanf(line, "SWAP %s %s", l->d.move.dest, l->d.move.src)==2) {
+    } else if(sscanf(line, "SWAP %s %s", l->d.move.dest, l->d.move.src) == 2) {
         *which = ELEM_SWAP;
 
-    } else if(sscanf(line, "BUS %s %s %d %d %d %d %d %d %d %d", l->d.bus.dest, l->d.bus.src,
-                           &l->d.bus.PCBbit[7],
-                           &l->d.bus.PCBbit[6],
-                           &l->d.bus.PCBbit[5],
-                           &l->d.bus.PCBbit[4],
-                           &l->d.bus.PCBbit[3],
-                           &l->d.bus.PCBbit[2],
-                           &l->d.bus.PCBbit[1],
-                           &l->d.bus.PCBbit[0])==(2+8)) {
+    } else if(sscanf(line,
+                     "BUS %s %s %d %d %d %d %d %d %d %d",
+                     l->d.bus.dest,
+                     l->d.bus.src,
+                     &l->d.bus.PCBbit[7],
+                     &l->d.bus.PCBbit[6],
+                     &l->d.bus.PCBbit[5],
+                     &l->d.bus.PCBbit[4],
+                     &l->d.bus.PCBbit[3],
+                     &l->d.bus.PCBbit[2],
+                     &l->d.bus.PCBbit[1],
+                     &l->d.bus.PCBbit[0])
+              == (2 + 8)) {
         *which = ELEM_BUS;
 
-    } else if(sscanf(line, "SPI %s %s %s %s %s %s %s %s", l->d.spi.name, l->d.spi.send, l->d.spi.recv, l->d.spi.bitrate, l->d.spi.mode, l->d.spi.modes, l->d.spi.size, l->d.spi.first)==8) {
+    } else if(sscanf(line,
+                     "SPI %s %s %s %s %s %s %s %s",
+                     l->d.spi.name,
+                     l->d.spi.send,
+                     l->d.spi.recv,
+                     l->d.spi.bitrate,
+                     l->d.spi.mode,
+                     l->d.spi.modes,
+                     l->d.spi.size,
+                     l->d.spi.first)
+              == 8) {
         *which = ELEM_SPI;
 
-    } else if(sscanf(line,  "7SEGMENTS %s %s %c", l->d.segments.dest, l->d.segments.src, &l->d.segments.common)==3) {
+    } else if(sscanf(line, "7SEGMENTS %s %s %c", l->d.segments.dest, l->d.segments.src, &l->d.segments.common) == 3) {
         l->d.segments.which = ELEM_7SEG;
         *which = ELEM_7SEG;
 
-    } else if(sscanf(line,  "9SEGMENTS %s %s %c", l->d.segments.dest, l->d.segments.src, &l->d.segments.common)==3) {
+    } else if(sscanf(line, "9SEGMENTS %s %s %c", l->d.segments.dest, l->d.segments.src, &l->d.segments.common) == 3) {
         l->d.segments.which = ELEM_9SEG;
         *which = ELEM_9SEG;
 
-    } else if(sscanf(line, "14SEGMENTS %s %s %c", l->d.segments.dest, l->d.segments.src, &l->d.segments.common)==3) {
+    } else if(sscanf(line, "14SEGMENTS %s %s %c", l->d.segments.dest, l->d.segments.src, &l->d.segments.common) == 3) {
         l->d.segments.which = ELEM_14SEG;
         *which = ELEM_14SEG;
 
-    } else if(sscanf(line, "16SEGMENTS %s %s %c", l->d.segments.dest, l->d.segments.src, &l->d.segments.common)==3) {
+    } else if(sscanf(line, "16SEGMENTS %s %s %c", l->d.segments.dest, l->d.segments.src, &l->d.segments.common) == 3) {
         l->d.segments.which = ELEM_16SEG;
         *which = ELEM_16SEG;
 
-    } else if(sscanf(line, "STEPPER %s %s %s %d %d %s", l->d.stepper.name, l->d.stepper.max, l->d.stepper.P, &l->d.stepper.nSize, &l->d.stepper.graph, l->d.stepper.coil)==6) {
+    } else if(sscanf(line,
+                     "STEPPER %s %s %s %d %d %s",
+                     l->d.stepper.name,
+                     l->d.stepper.max,
+                     l->d.stepper.P,
+                     &l->d.stepper.nSize,
+                     &l->d.stepper.graph,
+                     l->d.stepper.coil)
+              == 6) {
         *which = ELEM_STEPPER;
-    } else if(sscanf(line, "PULSER %s %s %s %s %s", l->d.pulser.P1, l->d.pulser.P0, l->d.pulser.accel, l->d.pulser.counter, l->d.pulser.busy)==5) {
+    } else if(sscanf(line,
+                     "PULSER %s %s %s %s %s",
+                     l->d.pulser.P1,
+                     l->d.pulser.P0,
+                     l->d.pulser.accel,
+                     l->d.pulser.counter,
+                     l->d.pulser.busy)
+              == 5) {
         *which = ELEM_PULSER;
-    } else if(sscanf(line, "NPULSE %s %s %s", l->d.Npulse.counter, l->d.Npulse.targetFreq, l->d.Npulse.coil)==3) {
+    } else if(sscanf(line, "NPULSE %s %s %s", l->d.Npulse.counter, l->d.Npulse.targetFreq, l->d.Npulse.coil) == 3) {
         *which = ELEM_NPULSE;
-    } else if(sscanf(line, "QUAD_ENCOD %s %d %s %s |%s |%s", l->d.QuadEncod.counter, &l->d.QuadEncod.int01, l->d.QuadEncod.contactA, l->d.QuadEncod.contactB, l->d.QuadEncod.contactZ, l->d.QuadEncod.zero)==6) {
+    } else if(sscanf(line,
+                     "QUAD_ENCOD %s %d %s %s |%s |%s",
+                     l->d.QuadEncod.counter,
+                     &l->d.QuadEncod.int01,
+                     l->d.QuadEncod.contactA,
+                     l->d.QuadEncod.contactB,
+                     l->d.QuadEncod.contactZ,
+                     l->d.QuadEncod.zero)
+              == 6) {
         *which = ELEM_QUAD_ENCOD;
-    } else if(sscanf(line, "QUAD_ENCOD %s %d %s %s | |%s", l->d.QuadEncod.counter, &l->d.QuadEncod.int01, l->d.QuadEncod.contactA, l->d.QuadEncod.contactB, l->d.QuadEncod.zero)==5) {
+    } else if(sscanf(line,
+                     "QUAD_ENCOD %s %d %s %s | |%s",
+                     l->d.QuadEncod.counter,
+                     &l->d.QuadEncod.int01,
+                     l->d.QuadEncod.contactA,
+                     l->d.QuadEncod.contactB,
+                     l->d.QuadEncod.zero)
+              == 5) {
         *which = ELEM_QUAD_ENCOD;
-    } else if(sscanf(line, "QUAD_ENCOD %s %d %s %s |%s |", l->d.QuadEncod.counter, &l->d.QuadEncod.int01, l->d.QuadEncod.contactA, l->d.QuadEncod.contactB, l->d.QuadEncod.contactZ)==5) {
+    } else if(sscanf(line,
+                     "QUAD_ENCOD %s %d %s %s |%s |",
+                     l->d.QuadEncod.counter,
+                     &l->d.QuadEncod.int01,
+                     l->d.QuadEncod.contactA,
+                     l->d.QuadEncod.contactB,
+                     l->d.QuadEncod.contactZ)
+              == 5) {
         *which = ELEM_QUAD_ENCOD;
-    } else if(sscanf(line, "QUAD_ENCOD %s %d %s %s", l->d.QuadEncod.counter, &l->d.QuadEncod.int01, l->d.QuadEncod.contactA, l->d.QuadEncod.contactB)==4) {
+    } else if(sscanf(line,
+                     "QUAD_ENCOD %s %d %s %s",
+                     l->d.QuadEncod.counter,
+                     &l->d.QuadEncod.int01,
+                     l->d.QuadEncod.contactA,
+                     l->d.QuadEncod.contactB)
+              == 4) {
         *which = ELEM_QUAD_ENCOD;
-    } else if(sscanf(line, "MOD %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2)==3) {
+    } else if(sscanf(line, "MOD %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_MOD;
-    } else if(sscanf(line, "SHL %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2)==3) {
+    } else if(sscanf(line, "SHL %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_SHL;
-    } else if(sscanf(line, "SHR %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2)==3) {
+    } else if(sscanf(line, "SHR %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_SHR;
-    } else if(sscanf(line, "SR0 %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2)==3) {
+    } else if(sscanf(line, "SR0 %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_SR0;
-    } else if(sscanf(line, "ROL %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2)==3) {
+    } else if(sscanf(line, "ROL %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_ROL;
-    } else if(sscanf(line, "ROR %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2)==3) {
+    } else if(sscanf(line, "ROR %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_ROR;
-    } else if(sscanf(line, "AND %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2)==3) {
+    } else if(sscanf(line, "AND %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_AND;
-    } else if(sscanf(line, "OR %s %s %s",  l->d.math.dest, l->d.math.op1, l->d.math.op2)==3) {
+    } else if(sscanf(line, "OR %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_OR;
-    } else if(sscanf(line, "XOR %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2)==3) {
+    } else if(sscanf(line, "XOR %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_XOR;
-    } else if(sscanf(line, "NOT %s %s", l->d.math.dest, l->d.math.op1)==2) {
+    } else if(sscanf(line, "NOT %s %s", l->d.math.dest, l->d.math.op1) == 2) {
         *which = ELEM_NOT;
-    } else if(sscanf(line, "NEG %s %s", l->d.math.dest, l->d.math.op1)==2) {
+    } else if(sscanf(line, "NEG %s %s", l->d.math.dest, l->d.math.op1) == 2) {
         *which = ELEM_NEG;
-    } else if(sscanf(line, "ADD %s %s %s", l->d.math.dest, l->d.math.op1,
-        l->d.math.op2)==3)
-    {
+    } else if(sscanf(line, "ADD %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_ADD;
-    } else if(sscanf(line, "SUB %s %s %s", l->d.math.dest, l->d.math.op1,
-        l->d.math.op2)==3)
-    {
+    } else if(sscanf(line, "SUB %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_SUB;
-    } else if(sscanf(line, "MUL %s %s %s", l->d.math.dest, l->d.math.op1,
-        l->d.math.op2)==3)
-    {
+    } else if(sscanf(line, "MUL %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_MUL;
-    } else if(sscanf(line, "DIV %s %s %s", l->d.math.dest, l->d.math.op1,
-        l->d.math.op2)==3)
-    {
+    } else if(sscanf(line, "DIV %s %s %s", l->d.math.dest, l->d.math.op1, l->d.math.op2) == 3) {
         *which = ELEM_DIV;
 
-    } else if(sscanf(line, "SET_BIT %s %s", l->d.move.dest, l->d.move.src)==2) {
+    } else if(sscanf(line, "SET_BIT %s %s", l->d.move.dest, l->d.move.src) == 2) {
         *which = ELEM_SET_BIT;
-    } else if(sscanf(line, "CLEAR_BIT %s %s", l->d.move.dest, l->d.move.src)==2) {
+    } else if(sscanf(line, "CLEAR_BIT %s %s", l->d.move.dest, l->d.move.src) == 2) {
         *which = ELEM_CLEAR_BIT;
-    } else if(sscanf(line, "IF_BIT_SET %s %s", l->d.move.dest, l->d.move.src)==2) {
+    } else if(sscanf(line, "IF_BIT_SET %s %s", l->d.move.dest, l->d.move.src) == 2) {
         *which = ELEM_IF_BIT_SET;
-    } else if(sscanf(line, "IF_BIT_CLEAR %s %s", l->d.move.dest, l->d.move.src)==2) {
+    } else if(sscanf(line, "IF_BIT_CLEAR %s %s", l->d.move.dest, l->d.move.src) == 2) {
         *which = ELEM_IF_BIT_CLEAR;
-    #ifdef USE_SFR
-    } else if(sscanf(line, "RSFR %s %s", l->d.cmp.op1, l->d.cmp.op2)==2) {
+#ifdef USE_SFR
+    } else if(sscanf(line, "RSFR %s %s", l->d.cmp.op1, l->d.cmp.op2) == 2) {
         *which = ELEM_RSFR;
-    } else if(sscanf(line, "WSFR %s %s", l->d.cmp.op1, l->d.cmp.op2)==2) {
+    } else if(sscanf(line, "WSFR %s %s", l->d.cmp.op1, l->d.cmp.op2) == 2) {
         *which = ELEM_WSFR;
-    } else if(sscanf(line, "SSFR %s %s", l->d.cmp.op1, l->d.cmp.op2)==2) {
+    } else if(sscanf(line, "SSFR %s %s", l->d.cmp.op1, l->d.cmp.op2) == 2) {
         *which = ELEM_SSFR;
     } else if(sscanf(line, "CSFR %s %s", l->d.cmp.op1, l->d.cmp.op2)==2) {
         *which = ELEM_CSFR;
@@ -854,6 +902,7 @@ void SaveElemToFile(FILE *f, int which, void *any, int depth, int rung)
                 l->d.coil.setOnly, l->d.coil.resetOnly, l->d.coil.ttrigger);
             break;
 
+        // clang-format off
         case ELEM_TIME2COUNT: s = "TIME2COUNT"; goto timer;
         case ELEM_TCY: s = "TCY"; goto timer;
         case ELEM_TON: s = "TON"; goto timer;
@@ -870,6 +919,7 @@ void SaveElemToFile(FILE *f, int which, void *any, int depth, int rung)
         case ELEM_CTD: s = "CTD"; goto counter;
         case ELEM_CTC: s = "CTC"; goto counter;
         case ELEM_CTR: s = "CTR"; goto counter;
+        // clang-format on
         counter:
             fprintf(f, "%s %s %s %s\n", s, l->d.counter.name, l->d.counter.max, l->d.counter.init);
             break;
@@ -954,6 +1004,7 @@ void SaveElemToFile(FILE *f, int which, void *any, int depth, int rung)
             fprintf(f, "NEG %s %s\n", l->d.math.dest, l->d.math.op1);
             break;
 
+        // clang-format off
         case ELEM_ROL: s = "ROL"; goto math;
         case ELEM_ROR: s = "ROR"; goto math;
         case ELEM_SHL: s = "SHL"; goto math;
@@ -967,6 +1018,7 @@ void SaveElemToFile(FILE *f, int which, void *any, int depth, int rung)
         case ELEM_SUB: s = "SUB"; goto math;
         case ELEM_MUL: s = "MUL"; goto math;
         case ELEM_DIV: s = "DIV"; goto math;
+        // clang-format on
         math:
             fprintf(f, "%s %s %s %s\n", s, l->d.math.dest, l->d.math.op1,
                 l->d.math.op2);
@@ -990,24 +1042,28 @@ void SaveElemToFile(FILE *f, int which, void *any, int depth, int rung)
 
         #ifdef USE_SFR
         // Special function
+        // clang-format off
         case ELEM_RSFR: s = "RSFR"; goto sfrcmp;
         case ELEM_WSFR: s = "WSFR"; goto sfrcmp;
         case ELEM_SSFR: s = "SSFR"; goto sfrcmp;
         case ELEM_CSFR: s = "CSFR"; goto sfrcmp;
         case ELEM_TSFR: s = "TSFR"; goto sfrcmp;
         case ELEM_T_C_SFR: s = "TCSFR"; goto sfrcmp;
+        // clang-format on
         sfrcmp:
             fprintf(f, "%s %s %s\n", s, l->d.cmp.op1, l->d.cmp.op2);
             break;
         // Special function
         #endif
 
+        // clang-format off
         case ELEM_EQU: s = "EQU"; goto cmp;
         case ELEM_NEQ: s = "NEQ"; goto cmp;
         case ELEM_GRT: s = "GRT"; goto cmp;
         case ELEM_GEQ: s = "GEQ"; goto cmp;
         case ELEM_LES: s = "LES"; goto cmp;
         case ELEM_LEQ: s = "LEQ"; goto cmp;
+        // clang-format on
         cmp:
             fprintf(f, "%s %s %s\n", s, l->d.cmp.op1, l->d.cmp.op2);
             break;

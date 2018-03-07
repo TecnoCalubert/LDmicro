@@ -1,16 +1,15 @@
 ---
 BasedOnStyle: LLVM
-#BasedOnStyle: Google
-#BasedOnStyle: WebKit
 Language:        Cpp
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: true
+AlignEscapedNewlines: Left
 AlignTrailingComments: true
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: false
 AllowAllParametersOfDeclarationOnNextLine: true
-BinPackParameters: false
 BinPackArguments: false
+BinPackParameters: true
 AlwaysBreakBeforeMultilineStrings: true
 BraceWrapping:
   AfterFunction:   true
@@ -19,6 +18,7 @@ BreakStringLiterals: false
 BreakBeforeBinaryOperators: NonAssignment
 ColumnLimit:     120
 IndentCaseLabels: true
+#IndentPPDirectives: AfterHash
 IndentWidth:     4
 NamespaceIndentation: All
 ReflowComments: false

@@ -123,12 +123,12 @@ static const char *MarkUsedVariable(const char *name, DWORD flag);
 int isVarInited(char *name)
 {
     int i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             break;
         }
     }
-    if (i >= VariableCount)
+    if(i >= VariableCount)
         return -1;
     return Variables[i].initedRung;
 }
@@ -136,12 +136,12 @@ int isVarInited(char *name)
 DWORD isVarUsed(char *name)
 {
     int i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             break;
         }
     }
-    if (i >= MAX_IO)
+    if(i >= MAX_IO)
         return 0;
 
     return Variables[i].usedFlags;
@@ -154,8 +154,8 @@ DWORD isVarUsed(char *name)
 static BOOL SingleBitOn(char *name)
 {
     int i;
-    for (i = 0; i < SingleBitItemsCount; i++) {
-        if (strcmp(SingleBitItems[i].name, name) == 0) {
+    for(i = 0; i < SingleBitItemsCount; i++) {
+        if(strcmp(SingleBitItems[i].name, name) == 0) {
             return SingleBitItems[i].powered;
         }
     }
@@ -169,13 +169,13 @@ static BOOL SingleBitOn(char *name)
 static void SetSingleBit(const char *name, BOOL state)
 {
     int i;
-    for (i = 0; i < SingleBitItemsCount; i++) {
-        if (strcmp(SingleBitItems[i].name, name) == 0) {
+    for(i = 0; i < SingleBitItemsCount; i++) {
+        if(strcmp(SingleBitItems[i].name, name) == 0) {
             SingleBitItems[i].powered = state;
             return;
         }
     }
-    if (i < MAX_IO) {
+    if(i < MAX_IO) {
         strcpy(SingleBitItems[i].name, name);
         SingleBitItems[i].powered = state;
         SingleBitItemsCount++;
@@ -197,12 +197,12 @@ static void Increment(const char *name, const char *overlap, const char *overflo
     SDWORD signMask = 1 << (sov * 8 - 1);
     SDWORD signBefore, signAfter;
     int    i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             signBefore = Variables[i].val & signMask;
             (Variables[i].val)++;
             signAfter = Variables[i].val & signMask;
-            if ((signBefore == 0) && (signAfter != 0)) {
+            if((signBefore == 0) && (signAfter != 0)) {
                 SetSingleBit(overflow, TRUE);
                 Variables[i].val &= (1 << (8 * sov)) - 1;
             }
@@ -222,8 +222,8 @@ static void Decrement(const char *name, const char *overlap, const char *overflo
     SDWORD signMask = 1 << (sov * 8 - 1);
     SDWORD signBefore, signAfter;
     int    i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             SetSingleBit(overlap, Variables[i].val == 0);
             // OVERLAP 00...00 -> 11...11
 
@@ -231,7 +231,7 @@ static void Decrement(const char *name, const char *overlap, const char *overflo
             (Variables[i].val)--;
             signAfter = Variables[i].val & signMask;
 
-            if ((signBefore != 0) && (signAfter == 0)) {
+            if((signBefore != 0) && (signAfter == 0)) {
                 SetSingleBit(overflow, TRUE);
                 Variables[i].val &= (1 << (8 * sov)) - 1;
             }
@@ -244,34 +244,29 @@ static void Decrement(const char *name, const char *overlap, const char *overflo
 //-----------------------------------------------------------------------------
 static SDWORD AddVariable(const char *name1, const char *name2, const char *name3, const char *overflow)
 {
-    long long int ret = (long long int)GetSimulationVariable(name2) +
-                        (long long int)GetSimulationVariable(name3);
-    int    sov = SizeOfVar(name1);
-    SDWORD signMask = 1 << (sov * 8 - 1);
-    SDWORD sign2 = GetSimulationVariable(name2) & signMask;
-    SDWORD sign3 = GetSimulationVariable(name3) & signMask;
-    SDWORD signr = (SDWORD)(ret & signMask);
-    if ((sign2 == sign3) && //
-        (signr != sign3))
+    long long int ret = (long long int)GetSimulationVariable(name2) + (long long int)GetSimulationVariable(name3);
+    int           sov = SizeOfVar(name1);
+    SDWORD        signMask = 1 << (sov * 8 - 1);
+    SDWORD        sign2 = GetSimulationVariable(name2) & signMask;
+    SDWORD        sign3 = GetSimulationVariable(name3) & signMask;
+    SDWORD        signr = (SDWORD)(ret & signMask);
+    if((sign2 == sign3) && (signr != sign3))
         SetSingleBit(overflow, TRUE);
     return (SDWORD)ret;
 }
 
 //-----------------------------------------------------------------------------
-static SDWORD SubVariable(const char *name1, const char *name2,
-                          const char *name3, const char *overflow)
+static SDWORD SubVariable(const char *name1, const char *name2, const char *name3, const char *overflow)
 {
-    long long int ret = (long long int)GetSimulationVariable(name2) -
-                        (long long int)GetSimulationVariable(name3);
-    int    sov = SizeOfVar(name1);
-    SDWORD signMask = 1 << (sov * 8 - 1);
-    SDWORD sign2 = GetSimulationVariable(name2) & signMask;
-    SDWORD sign3 = GetSimulationVariable(name3) & signMask;
-    SDWORD signr = (SDWORD)(ret & signMask);
+    long long int ret = (long long int)GetSimulationVariable(name2) - (long long int)GetSimulationVariable(name3);
+    int           sov = SizeOfVar(name1);
+    SDWORD        signMask = 1 << (sov * 8 - 1);
+    SDWORD        sign2 = GetSimulationVariable(name2) & signMask;
+    SDWORD        sign3 = GetSimulationVariable(name3) & signMask;
+    SDWORD        signr = (SDWORD)(ret & signMask);
     //  if((sign2 != sign3)
     //  && (signr != sign2))
-    if ((sign2 != sign3) && //
-        (signr == sign3))
+    if((sign2 != sign3) && (signr == sign3))
         SetSingleBit(overflow, TRUE);
     return (SDWORD)ret;
 }
@@ -282,8 +277,8 @@ static SDWORD SubVariable(const char *name1, const char *name2,
 void SetSimulationVariable(char *name, SDWORD val)
 {
     int i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             Variables[i].val = val;
             return;
         }
@@ -297,16 +292,16 @@ void SetSimulationVariable(char *name, SDWORD val)
 //-----------------------------------------------------------------------------
 SDWORD GetSimulationVariable(const char *name, BOOL forIoList)
 {
-    if (IsNumber(name)) {
+    if(IsNumber(name)) {
         return CheckMakeNumber(name);
     }
     int i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             return Variables[i].val;
         }
     }
-    if (forIoList)
+    if(forIoList)
         return 0;
     MarkUsedVariable(name, VAR_FLAG_OTHERWISE_FORGOTTEN);
     return GetSimulationVariable(name);
@@ -323,8 +318,8 @@ SDWORD GetSimulationVariable(const char *name)
 void SetSimulationStr(char *name, char *val)
 {
     int i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             strcpy(Variables[i].valstr, val);
             return;
         }
@@ -339,8 +334,8 @@ void SetSimulationStr(char *name, char *val)
 char *GetSimulationStr(char *name)
 {
     int i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             return Variables[i].valstr;
         }
     }
@@ -356,8 +351,8 @@ char *GetSimulationStr(char *name)
 void SetAdcShadow(char *name, SWORD val)
 {
     int i;
-    for (i = 0; i < AdcShadowsCount; i++) {
-        if (strcmp(AdcShadows[i].name, name) == 0) {
+    for(i = 0; i < AdcShadowsCount; i++) {
+        if(strcmp(AdcShadows[i].name, name) == 0) {
             AdcShadows[i].val = val;
             return;
         }
@@ -374,8 +369,8 @@ void SetAdcShadow(char *name, SWORD val)
 SWORD GetAdcShadow(char *name)
 {
     int i;
-    for (i = 0; i < AdcShadowsCount; i++) {
-        if (strcmp(AdcShadows[i].name, name) == 0) {
+    for(i = 0; i < AdcShadowsCount; i++) {
+        if(strcmp(AdcShadows[i].name, name) == 0) {
             return AdcShadows[i].val;
         }
     }
@@ -405,11 +400,11 @@ SDWORD GetRandom(char *name)
     char   seedName[MAX_NAME_LEN];
     sprintf(seedName, "$seed_%s", name);
     SetSimulationVariable(seedName, seed);
-    if (sov == 1)
+    if(sov == 1)
         return (signed char)(seed >> (8 * (4 - sov)));
-    else if (sov == 2)
+    else if(sov == 2)
         return (SWORD)(seed >> (8 * (4 - sov)));
-    else if (sov >= 3)
+    else if(sov >= 3)
         return (SDWORD)(seed >> (8 * (4 - sov)));
     else {
         oops();
@@ -420,44 +415,44 @@ SDWORD GetRandom(char *name)
 //-----------------------------------------------------------------------------
 static const char *Check(const char *name, DWORD flag, int i)
 {
-    switch (flag) {
+    switch(flag) {
         case VAR_FLAG_PWM:
-            if (Variables[i].usedFlags & ~(VAR_FLAG_RES | VAR_FLAG_PWM))
+            if(Variables[i].usedFlags & ~(VAR_FLAG_RES | VAR_FLAG_PWM))
                 return _("PWM: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_TOF:
-            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("TOF: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_TON:
-            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("TON: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_TCY:
-            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("TCY: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_RTO:
-            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("RTO: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_RTL:
-            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("RTL: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_THI:
-            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("THI: variable can only be used for RES elsewhere");
             break;
 
         case VAR_FLAG_TLO:
-            if (Variables[i].usedFlags & ~VAR_FLAG_RES)
+            if(Variables[i].usedFlags & ~VAR_FLAG_RES)
                 return _("TLO: variable can only be used for RES elsewhere");
             break;
 
@@ -470,40 +465,40 @@ static const char *Check(const char *name, DWORD flag, int i)
         }
 
         case VAR_FLAG_TABLE:
-            if (Variables[i].usedFlags & ~VAR_FLAG_TABLE)
+            if(Variables[i].usedFlags & ~VAR_FLAG_TABLE)
                 return _("TABLE: variable can be used only with TABLE");
             break;
 
         case VAR_FLAG_ANY:
-            if (Variables[i].usedFlags & VAR_FLAG_PWM)
+            if(Variables[i].usedFlags & VAR_FLAG_PWM)
                 return _("PWM: variable can only be used for RES elsewhere");
 
-            if (Variables[i].usedFlags & VAR_FLAG_TOF)
+            if(Variables[i].usedFlags & VAR_FLAG_TOF)
                 return _("TOF: variable can only be used for RES elsewhere");
 
-            if (Variables[i].usedFlags & VAR_FLAG_TON)
+            if(Variables[i].usedFlags & VAR_FLAG_TON)
                 return _("TON: variable can only be used for RES elsewhere");
 
-            if (Variables[i].usedFlags & VAR_FLAG_TCY)
+            if(Variables[i].usedFlags & VAR_FLAG_TCY)
                 return _("TCY: variable can only be used for RES elsewhere");
             /*
             if(Variables[i].usedFlags & VAR_FLAG_RTO)
                 return _("RTO: variable can only be used for RES elsewhere");
             */
-            if (Variables[i].usedFlags & VAR_FLAG_RTL)
+            if(Variables[i].usedFlags & VAR_FLAG_RTL)
                 return _("RTL: variable can only be used for RES elsewhere");
 
-            if (Variables[i].usedFlags & VAR_FLAG_THI)
+            if(Variables[i].usedFlags & VAR_FLAG_THI)
                 return _("THI: variable can only be used for RES elsewhere");
 
-            if (Variables[i].usedFlags & VAR_FLAG_TLO)
+            if(Variables[i].usedFlags & VAR_FLAG_TLO)
                 return _("TLO: variable can only be used for RES elsewhere");
 
             break;
 
         case VAR_FLAG_OTHERWISE_FORGOTTEN:
-            if ((name[0] != '$') && //
-                (name[0] != '#')) {
+            if((name[0] != '$') && //
+               (name[0] != '#')) {
                 Error(_("Variable '%s' not assigned to, e.g. with a "
                         "MOV statement, an ADD statement, etc.\r\n\r\n"
                         "This is probably a programming error; now it "
@@ -529,15 +524,15 @@ static const char *rungsUsed = ""; // local store var for message
 static const char *MarkUsedVariable(const char *name, DWORD flag)
 {
     int i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             break;
         }
     }
-    if (i >= MAX_IO)
+    if(i >= MAX_IO)
         return "";
 
-    if (i == VariableCount) {
+    if(i == VariableCount) {
         strcpy(Variables[i].name, name);
         Variables[i].usedFlags = 0;
         Variables[i].val = 0;
@@ -548,16 +543,16 @@ static const char *MarkUsedVariable(const char *name, DWORD flag)
 
     char srungNow[MAX_NAME_LEN];
     sprintf(srungNow, "%d ", rungNow + 1);
-    if (!strstr(Variables[i].usedRungs, srungNow))
+    if(!strstr(Variables[i].usedRungs, srungNow))
         strcat(Variables[i].usedRungs, srungNow);
 
     rungsUsed = Variables[i].usedRungs;
 
     const char *s = Check(name, flag, i);
-    if (s)
+    if(s)
         return s;
 
-    if (Variables[i].initedRung < 0)
+    if(Variables[i].initedRung < 0)
         Variables[i].initedRung = rungNow;
     Variables[i].usedFlags |= flag;
     return NULL;
@@ -566,15 +561,15 @@ static const char *MarkUsedVariable(const char *name, DWORD flag)
 void MarkInitedVariable(char *name)
 {
     int i;
-    for (i = 0; i < VariableCount; i++) {
-        if (strcmp(Variables[i].name, name) == 0) {
+    for(i = 0; i < VariableCount; i++) {
+        if(strcmp(Variables[i].name, name) == 0) {
             break;
         }
     }
-    if (i >= MAX_IO)
+    if(i >= MAX_IO)
         oops();
 
-    if (i == VariableCount) {
+    if(i == VariableCount) {
         strcpy(Variables[i].name, name);
         Variables[i].usedFlags = 0;
         Variables[i].val = 0;
@@ -583,25 +578,31 @@ void MarkInitedVariable(char *name)
         strcpy(Variables[i].usedRungs, "");
         VariableCount++;
     }
-    if (Variables[i].initedRung < 0)
+    if(Variables[i].initedRung < 0)
         Variables[i].initedRung = rungNow;
 }
 
 //-----------------------------------------------------------------------------
 static void CheckMsg(const char *name, const char *s, int i)
 {
-    if (s) {
+    if(s) {
 #if 1
         Error(_("Rung %d: Variable '%s' incorrectly assigned.\n%s.\nSee "
                 "rungs:%s"),
-              rungNow + 1, name, s, rungsUsed);
+              rungNow + 1,
+              name,
+              s,
+              rungsUsed);
 #else
         char s2[1000];
         sprintf(s2,
                 _("Rung %d: Variable '%s' incorrectly assigned.\n%s.\nSee "
                   "rungs:%s"),
-                rungNow + 1, name, s, rungsUsed);
-        if (i >= 0) {
+                rungNow + 1,
+                name,
+                s,
+                rungsUsed);
+        if(i >= 0) {
             char s3[1000];
             sprintf(s3, _("Inited in Rung %d"), Variables[i].initedRung + 1);
             Error("%s %s", s2, s3);
@@ -629,13 +630,12 @@ static void CheckVariableNamesCircuit(int which, void *elem)
     DWORD     flag;
     char      str[MAX_NAME_LEN];
 
-    switch (which) {
+    switch(which) {
         case ELEM_SERIES_SUBCKT: {
             int               i;
             ElemSubcktSeries *s = (ElemSubcktSeries *)elem;
-            for (i = 0; i < s->count; i++) {
-                CheckVariableNamesCircuit(s->contents[i].which,
-                                          s->contents[i].data.any);
+            for(i = 0; i < s->count; i++) {
+                CheckVariableNamesCircuit(s->contents[i].which, s->contents[i].data.any);
             }
             break;
         }
@@ -643,9 +643,8 @@ static void CheckVariableNamesCircuit(int which, void *elem)
         case ELEM_PARALLEL_SUBCKT: {
             int                 i;
             ElemSubcktParallel *p = (ElemSubcktParallel *)elem;
-            for (i = 0; i < p->count; i++) {
-                CheckVariableNamesCircuit(p->contents[i].which,
-                                          p->contents[i].data.any);
+            for(i = 0; i < p->count; i++) {
+                CheckVariableNamesCircuit(p->contents[i].which, p->contents[i].data.any);
             }
             break;
         }
@@ -657,19 +656,19 @@ static void CheckVariableNamesCircuit(int which, void *elem)
         case ELEM_TCY:
         case ELEM_THI:
         case ELEM_TLO:
-            if (which == ELEM_RTO)
+            if(which == ELEM_RTO)
                 flag = VAR_FLAG_RTO;
-            else if (which == ELEM_RTL)
+            else if(which == ELEM_RTL)
                 flag = VAR_FLAG_RTL;
-            else if (which == ELEM_TOF)
+            else if(which == ELEM_TOF)
                 flag = VAR_FLAG_TOF;
-            else if (which == ELEM_TON)
+            else if(which == ELEM_TON)
                 flag = VAR_FLAG_TON;
-            else if (which == ELEM_TCY)
+            else if(which == ELEM_TCY)
                 flag = VAR_FLAG_TCY;
-            else if (which == ELEM_THI)
+            else if(which == ELEM_THI)
                 flag = VAR_FLAG_THI;
-            else if (which == ELEM_TLO)
+            else if(which == ELEM_TLO)
                 flag = VAR_FLAG_TLO;
             else
                 oops();
@@ -682,13 +681,13 @@ static void CheckVariableNamesCircuit(int which, void *elem)
         case ELEM_CTD:
         case ELEM_CTC:
         case ELEM_CTR:
-            if (which == ELEM_CTU)
+            if(which == ELEM_CTU)
                 flag = VAR_FLAG_CTU;
-            else if (which == ELEM_CTD)
+            else if(which == ELEM_CTD)
                 flag = VAR_FLAG_CTD;
-            else if (which == ELEM_CTC)
+            else if(which == ELEM_CTC)
                 flag = VAR_FLAG_CTC;
-            else if (which == ELEM_CTR)
+            else if(which == ELEM_CTR)
                 flag = VAR_FLAG_CTR;
             else
                 oops();
@@ -750,7 +749,7 @@ static void CheckVariableNamesCircuit(int which, void *elem)
             // clang-format on
             MarkWithCheck(s, VAR_FLAG_ANY);
             MarkWithCheck(l->d.segments.dest, VAR_FLAG_ANY);
-            if (!IsNumber(l->d.segments.src))
+            if(!IsNumber(l->d.segments.src))
                 MarkWithCheck(l->d.segments.src, VAR_FLAG_ANY);
             break;
 
@@ -758,7 +757,7 @@ static void CheckVariableNamesCircuit(int which, void *elem)
             sprintf(str, "%s%s", l->d.lookUpTable.name, ""); // "LutElement");
             MarkWithCheck(str, VAR_FLAG_TABLE);
             MarkWithCheck(l->d.lookUpTable.dest, VAR_FLAG_ANY);
-            if (!IsNumber(l->d.lookUpTable.index))
+            if(!IsNumber(l->d.lookUpTable.index))
                 MarkWithCheck(l->d.lookUpTable.index, VAR_FLAG_ANY);
             break;
 
@@ -766,7 +765,7 @@ static void CheckVariableNamesCircuit(int which, void *elem)
             sprintf(str, "%s%s", l->d.piecewiseLinear.name, "");
             MarkWithCheck(str, VAR_FLAG_TABLE);
             MarkWithCheck(l->d.piecewiseLinear.dest, VAR_FLAG_ANY);
-            if (!IsNumber(l->d.lookUpTable.index))
+            if(!IsNumber(l->d.lookUpTable.index))
                 MarkWithCheck(l->d.lookUpTable.index,
                               VAR_FLAG_ANY); // not tested
             break;
@@ -805,7 +804,7 @@ static void CheckVariableNamesCircuit(int which, void *elem)
 
         case ELEM_SHIFT_REGISTER: {
             int i;
-            for (i = 1; i < l->d.shiftRegister.stages; i++) {
+            for(i = 1; i < l->d.shiftRegister.stages; i++) {
                 char str[MAX_NAME_LEN + 10];
                 sprintf(str, "%s%d", l->d.shiftRegister.name, i);
                 MarkWithCheck(str, VAR_FLAG_ANY);
@@ -862,7 +861,7 @@ static void CheckVariableNamesCircuit(int which, void *elem)
 void CheckVariableNames(void)
 {
     int i;
-    for (i = 0; i < Prog.numRungs; i++) {
+    for(i = 0; i < Prog.numRungs; i++) {
         rungNow = i; // Ok
         CheckVariableNamesCircuit(ELEM_SERIES_SUBCKT, Prog.rungs[i]);
     }
@@ -872,49 +871,51 @@ void CheckVariableNames(void)
 
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_RES)
-        if((Variables[i].usedFlags & ~VAR_FLAG_RES) == 0)
-             Error(_("Rung %d: Variable '%s' incorrectly assigned.\n%s."), Variables[i].initedRung+1, Variables[i].name,
-                   _("RES: Variable is not assigned to COUNTER or TIMER or PWM.\r\n"
-                          "You must assign a variable."));
-return;
+            if((Variables[i].usedFlags & ~VAR_FLAG_RES) == 0)
+                Error(_("Rung %d: Variable '%s' incorrectly assigned.\n%s."),
+                      Variables[i].initedRung + 1,
+                      Variables[i].name,
+                      _("RES: Variable is not assigned to COUNTER or TIMER or PWM.\r\n"
+                        "You must assign a variable."));
+    return;
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_PWM) {
-             //dbpx(Variables[i].usedFlags)
-             //Variables[i].usedFlags &= ~VAR_FLAG_PWM;
-             CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_PWM, i), i);
+            //dbpx(Variables[i].usedFlags)
+            //Variables[i].usedFlags &= ~VAR_FLAG_PWM;
+            CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_PWM, i), i);
         }
-//--
+    //--
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_TCY) {
-             dbpx(Variables[i].usedFlags)
-             //Variables[i].usedFlags &= ~VAR_FLAG_TCY;
-             CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TCY, i), i);
+            dbpx(Variables[i].usedFlags)
+                //Variables[i].usedFlags &= ~VAR_FLAG_TCY;
+                CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TCY, i), i);
         }
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_TON)
-             CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TON, i), i);
+            CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TON, i), i);
 
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_TOF)
-             CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TOF, i), i);
-/*
+            CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TOF, i), i);
+    /*
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_RTO)
              CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_RTO, i));
 */
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_RTL)
-             CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_RTL, i), i);
+            CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_RTL, i), i);
 
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_THI)
-             CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_THI, i), i);
+            CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_THI, i), i);
 
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_TLO)
-             CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TLO, i), i);
-//--
-/*
+            CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TLO, i), i);
+    //--
+    /*
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_CTU)
              CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_CTU, i));
@@ -931,11 +932,11 @@ return;
         if(Variables[i].usedFlags & VAR_FLAG_CTR)
              CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_CTR, i));
 */
-//--
+    //--
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_TABLE)
-             CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TABLE, i), i);
-/*
+            CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_TABLE, i), i);
+    /*
     for(i = 0; i < VariableCount; i++)
         if(Variables[i].usedFlags & VAR_FLAG_ANY)
              CheckMsg(Variables[i].name, Check(Variables[i].name, VAR_FLAG_ANY, i), i);
@@ -951,36 +952,33 @@ return;
 static void CheckSingleBitNegateCircuit(int which, void *elem)
 {
     ElemLeaf *l = (ElemLeaf *)elem;
-    char *name = NULL;
+    char *    name = NULL;
 
     switch(which) {
         case ELEM_SERIES_SUBCKT: {
-            int i;
+            int               i;
             ElemSubcktSeries *s = (ElemSubcktSeries *)elem;
             for(i = 0; i < s->count; i++) {
-                CheckSingleBitNegateCircuit(s->contents[i].which,
-                    s->contents[i].data.any);
+                CheckSingleBitNegateCircuit(s->contents[i].which, s->contents[i].data.any);
             }
             break;
         }
 
         case ELEM_PARALLEL_SUBCKT: {
-            int i;
+            int                 i;
             ElemSubcktParallel *p = (ElemSubcktParallel *)elem;
             for(i = 0; i < p->count; i++) {
-                CheckSingleBitNegateCircuit(p->contents[i].which,
-                    p->contents[i].data.any);
+                CheckSingleBitNegateCircuit(p->contents[i].which, p->contents[i].data.any);
             }
             break;
         }
         case ELEM_CONTACTS: {
-            if((l->d.contacts.name[0] == 'X')
-            && (l->d.contacts.set1))
-                 SetSingleBit(l->d.contacts.name, TRUE); // Set HI level inputs before simulating
+            if((l->d.contacts.name[0] == 'X') && (l->d.contacts.set1))
+                SetSingleBit(l->d.contacts.name, TRUE); // Set HI level inputs before simulating
             break;
         }
 
-        default: ;
+        default:;
     }
 }
 
@@ -1005,15 +1003,17 @@ static void IfConditionTrue(void)
     // now PC is on the ELSE or the END IF
     if(IntCode[IntPc].op == INT_ELSE) {
         int nesting = 1;
-        for(; ; IntPc++) {
-            if(IntPc >= IntCodeLen) oops();
+        for(;; IntPc++) {
+            if(IntPc >= IntCodeLen)
+                oops();
 
             if(IntCode[IntPc].op == INT_END_IF) {
                 nesting--;
             } else if(INT_IF_GROUP(IntCode[IntPc].op)) {
                 nesting++;
             }
-            if(nesting == 0) break;
+            if(nesting == 0)
+                break;
         }
     } else if(IntCode[IntPc].op == INT_END_IF) {
         return;
@@ -1031,8 +1031,9 @@ static void IfConditionTrue(void)
 static void IfConditionFalse(void)
 {
     int nesting = 0;
-    for(; ; IntPc++) {
-        if(IntPc >= IntCodeLen) oops();
+    for(;; IntPc++) {
+        if(IntPc >= IntCodeLen)
+            oops();
 
         if(IntCode[IntPc].op == INT_END_IF) {
             nesting--;
@@ -1041,7 +1042,8 @@ static void IfConditionFalse(void)
         } else if(IntCode[IntPc].op == INT_ELSE && nesting == 1) {
             break;
         }
-        if(nesting == 0) break;
+        if(nesting == 0)
+            break;
     }
 
     // now PC is on the ELSE or the END IF
@@ -1059,7 +1061,7 @@ static void IfConditionFalse(void)
 //-----------------------------------------------------------------------------
 long rol(long val, SDWORD n, int size, BOOL *state)
 {
-    char MSB = 0;
+    char        MSB = 0;
     signed char i;
     for(i = 0; i < n; i++) {
         if(size == 1) {
@@ -1074,7 +1076,8 @@ long rol(long val, SDWORD n, int size, BOOL *state)
         } else if(size == 4) {
             if(val & 0x80000000)
                 MSB = 1;
-        } else oops();
+        } else
+            oops();
 
         val = val << 1;
         val |= MSB;
@@ -1088,39 +1091,42 @@ long rol(long val, SDWORD n, int size, BOOL *state)
             val &= 0xFFffff;
         else if(size == 4)
             val &= 0xFFFFffff;
-        else oops();
+        else
+            oops();
     }
     return val;
 }
 //-----------------------------------------------------------------------------
 long ror(long val, SDWORD n, int size, BOOL *state)
 {
-    char LSB = 0;
+    char        LSB = 0;
     signed char i;
     for(i = 0; i < n; i++) {
         LSB = (char)(val & 1);
         *state = LSB;
         val = val >> 1;
         if(LSB) {
-          if(size == 1)
-              val |= 0x80;
-          else if(size == 2)
-              val |= 0x8000;
-          else if(size == 3)
-              val |= 0x800000;
-          else if(size == 4)
-              val |= 0x80000000;
-          else oops();
+            if(size == 1)
+                val |= 0x80;
+            else if(size == 2)
+                val |= 0x8000;
+            else if(size == 3)
+                val |= 0x800000;
+            else if(size == 4)
+                val |= 0x80000000;
+            else
+                oops();
         } else {
-          if(size == 1)
-              val &= 0x7f;
-          else if(size == 2)
-              val &= 0x7fff;
-          else if(size == 3)
-              val &= 0x7fffFF;
-          else if(size == 4)
-              val &= 0x7fffFFFF;
-          else oops();
+            if(size == 1)
+                val &= 0x7f;
+            else if(size == 2)
+                val &= 0x7fff;
+            else if(size == 3)
+                val &= 0x7fffFF;
+            else if(size == 4)
+                val &= 0x7fffFFFF;
+            else
+                oops();
         }
         if(size == 1)
             val &= 0xff;
@@ -1130,14 +1136,15 @@ long ror(long val, SDWORD n, int size, BOOL *state)
             val &= 0xffffFF;
         else if(size == 4)
             val &= 0xffffFFFF;
-        else oops();
+        else
+            oops();
     }
     return val;
 }
 //-----------------------------------------------------------------------------
 long sr0(long val, SDWORD n, int size, BOOL *state)
 {
-    char LSB = 0;
+    char        LSB = 0;
     signed char i;
     for(i = 0; i < n; i++) {
         LSB = (char)(val & 1);
@@ -1151,7 +1158,8 @@ long sr0(long val, SDWORD n, int size, BOOL *state)
             val &= 0x7fffFF;
         else if(size == 4)
             val &= 0x7fffFFFF;
-        else oops();
+        else
+            oops();
     }
     return val;
 }
@@ -1159,8 +1167,8 @@ long sr0(long val, SDWORD n, int size, BOOL *state)
 long shr(signed long int val, SDWORD n, int size, BOOL *state)
 {
     signed long int MSB = 0;
-    char LSB = 0;
-    signed char i;
+    char            LSB = 0;
+    signed char     i;
     for(i = 0; i < n; i++) {
         if(size == 1) {
             MSB = val & 0x80;
@@ -1170,7 +1178,8 @@ long shr(signed long int val, SDWORD n, int size, BOOL *state)
             MSB = val & 0x800000;
         } else if(size == 4) {
             MSB = val & 0x80000000;
-        } else oops();
+        } else
+            oops();
 
         LSB = (char)(val & 1);
         *state = LSB;
@@ -1182,7 +1191,7 @@ long shr(signed long int val, SDWORD n, int size, BOOL *state)
 //-----------------------------------------------------------------------------
 long shl(long val, SDWORD n, int size, BOOL *state)
 {
-    char MSB = 0;
+    char        MSB = 0;
     signed char i;
     for(i = 0; i < n; i++) {
         if(size == 1) {
@@ -1197,7 +1206,8 @@ long shl(long val, SDWORD n, int size, BOOL *state)
         } else if(size == 4) {
             if(val & 0x80000000)
                 MSB = 1;
-        } else oops();
+        } else
+            oops();
 
         val = val << 1;
         *state = MSB;
@@ -1210,7 +1220,8 @@ long shl(long val, SDWORD n, int size, BOOL *state)
             val &= 0xFFffff;
         else if(size == 4)
             val &= 0xFFFFffff;
-        else oops();
+        else
+            oops();
     }
     return val;
 }
@@ -1220,30 +1231,26 @@ int bin2bcd(int val)
 {
     int sign = 1;
     if(val < 0) {
-        sign = - 1;
+        sign = -1;
         Error(" Value 'val'=%d < 0", val);
     }
     if(val >= TenToThe(sizeof(val)))
-        Error("Value 'val'=%d overflow output range %d.", val, sizeof(val)-1);
-    int ret = val        % 10;
+        Error("Value 'val'=%d overflow output range %d.", val, sizeof(val) - 1);
+    int ret = val % 10;
     val /= 10;
-    ret |= (val        % 10) <<  8;
+    ret |= (val % 10) << 8;
     val /= 10;
-    ret |= (val        % 10) << 16;
+    ret |= (val % 10) << 16;
     val /= 10;
-    ret |= (val        % 10) << 24;
-//  ret |= sign<0?0x80000000:0*/;
+    ret |= (val % 10) << 24;
+    //  ret |= sign<0?0x80000000:0*/;
     return ret;
-    return  (val        % 10)
-        | (((val /= 10) % 10) <<  8)
-        | (((val /= 10) % 10) << 16)
-        | (((val /= 10) % 10) << 24)
-        | (sign<0?0x80000000:0);
 }
 //-----------------------------------------------------------------------------
 //Unpacked BCD to binary
 int bcd2bin(int val)
 {
+    // clang-format off
     if( (val & 0x000000f)        > 9
     || ((val & 0x0000f00) >>  8) > 9
     || ((val & 0x00f0000) >> 16) > 9
@@ -1253,11 +1260,13 @@ int bcd2bin(int val)
         + ((val & 0x0000f00) >>  8) * 10
         + ((val & 0x00f0000) >> 16) * 100
         + ((val & 0xf000000) >> 24) * 1000;
+    // clang-format on
 }
 //-----------------------------------------------------------------------------
 //Packed BCD to binary
 int packedbcd2bin(int val)
 {
+    // clang-format off
     return (val & 0x0000000f)
         + ((val & 0x000000f0) >>  4) * 10
         + ((val & 0x00000f00) >>  8) * 100
@@ -1266,13 +1275,14 @@ int packedbcd2bin(int val)
         + ((val & 0x00f00000) >> 20) * 100000
         + ((val & 0x0f000000) >> 24) * 1000000
         + ((val & 0xf0000000) >> 28) * 10000000;
+    // clang-format on
 }
 //-----------------------------------------------------------------------------
 int opposite(int val, int sov)
 {
     int ret = 0;
     int i;
-    for(i = 0; i < sov*8; i++) {
+    for(i = 0; i < sov * 8; i++) {
         ret = ret << 1;
         ret |= val & 1;
         val = val >> 1;
@@ -1284,14 +1294,15 @@ int swap(int val, int sov)
 {
     int ret = 0;
     if(sov == 1) {
-        ret = ((val & 0x0f) <<  4) | ((val & 0xf0) >> 4);
+        ret = ((val & 0x0f) << 4) | ((val & 0xf0) >> 4);
     } else if(sov == 2) {
-        ret = ((val & 0xff) <<  8) | ((val & 0xff00) >> 8);
+        ret = ((val & 0xff) << 8) | ((val & 0xff00) >> 8);
     } else if(sov == 3) {
         ret = ((val & 0xff) << 16) | ((val & 0xff0000) >> 16) | (val & 0xff00);
     } else if(sov == 4) {
         ret = ((val & 0xff) << 20) | ((val & 0xff000000) >> 20) | ((val & 0xff0000) >> 8) | ((val & 0xff00) << 8);
-    } else oops();
+    } else
+        oops();
     return ret;
 }
 //-----------------------------------------------------------------------------
@@ -1338,7 +1349,8 @@ int FindOpRung(int op, int rung)
 int FindOpName(int op, const char *name1)
 {
     int i;
-    if(!name1) oops();
+    if(!name1)
+        oops();
     for(i = 0; i < IntCodeLen; i++) {
         if((IntCode[i].op == op) && (strcmp(IntCode[i].name1, name1) == 0)) {
             //dbp("i=%d INT_%d r=%d ELEM_0x%X", i, IntCode[i].op, IntCode[i].rung, IntCode[i].which);
@@ -1352,8 +1364,10 @@ int FindOpName(int op, const char *name1)
 int FindOpName(int op, const char *name1, const char *name2)
 {
     int i;
-    if(!name1) oops();
-    if(!name2) oops();
+    if(!name1)
+        oops();
+    if(!name2)
+        oops();
     for(i = 0; i < IntCodeLen; i++) {
         if((IntCode[i].op == op) && (strcmp(IntCode[i].name1, name1) == 0) && (strcmp(IntCode[i].name2, name2) == 0)) {
             //dbp("i=%d INT_%d r=%d ELEM_0x%X", i, IntCode[i].op, IntCode[i].rung, IntCode[i].which);
@@ -1364,11 +1378,12 @@ int FindOpName(int op, const char *name1, const char *name2)
 }
 
 //-----------------------------------------------------------------------------
-int FindOpNameLast(int op, const char* name1)
+int FindOpNameLast(int op, const char *name1)
 {
     int i;
-    if(!name1) oops();
-    for(i = IntCodeLen-1; i >= 0; i--) {
+    if(!name1)
+        oops();
+    for(i = IntCodeLen - 1; i >= 0; i--) {
         if((IntCode[i].op == op) && (strcmp(IntCode[i].name1, name1) == 0)) {
             //dbp("i=%d INT_%d r=%d ELEM_0x%X", i, IntCode[i].op, IntCode[i].rung, IntCode[i].which);
             return i;
@@ -1381,9 +1396,11 @@ int FindOpNameLast(int op, const char* name1)
 int FindOpNameLast(int op, const char *name1, const char *name2)
 {
     int i;
-    if(!name1) oops();
-    if(!name2) oops();
-    for(i = IntCodeLen-1; i >= 0; i--) {
+    if(!name1)
+        oops();
+    if(!name2)
+        oops();
+    for(i = IntCodeLen - 1; i >= 0; i--) {
         if((IntCode[i].op == op) && (strcmp(IntCode[i].name1, name1) == 0) && (strcmp(IntCode[i].name2, name2) == 0)) {
             //dbp("i=%d INT_%d r=%d ELEM_0x%X", i, IntCode[i].op, IntCode[i].rung, IntCode[i].which);
             return i;
@@ -1411,10 +1428,10 @@ static void SimulateIntCode(void)
                 }
 
                 if(a->name2 && strlen(a->name2))
-                if(*(a->workingNow) != SingleBitOn(a->name2)) {
-                    NeedRedraw = 1;
-                    *(a->workingNow) = SingleBitOn(a->name2);
-                }
+                    if(*(a->workingNow) != SingleBitOn(a->name2)) {
+                        NeedRedraw = 1;
+                        *(a->workingNow) = SingleBitOn(a->name2);
+                    }
                 break;
 
             case INT_SET_BIT:
@@ -1434,26 +1451,24 @@ static void SimulateIntCode(void)
                 break;
 
             case INT_COPY_XOR_BIT_TO_BIT:
-                SetSingleBit(a->name1, (SingleBitOn(a->name1)&1) ^ (SingleBitOn(a->name2)&1));
+                SetSingleBit(a->name1, (SingleBitOn(a->name1) & 1) ^ (SingleBitOn(a->name2) & 1));
                 break;
 
             case INT_COPY_VAR_BIT_TO_VAR_BIT:
-                if(GetSimulationVariable(a->name2) & (1<<a->literal2))
-                    SetSimulationVariable(a->name1, GetSimulationVariable(a->name1) | (1<<a->literal));
+                if(GetSimulationVariable(a->name2) & (1 << a->literal2))
+                    SetSimulationVariable(a->name1, GetSimulationVariable(a->name1) | (1 << a->literal));
                 else
-                    SetSimulationVariable(a->name1, GetSimulationVariable(a->name1) & ~(1<<a->literal));
+                    SetSimulationVariable(a->name1, GetSimulationVariable(a->name1) & ~(1 << a->literal));
                 break;
 
             case INT_SET_VARIABLE_TO_LITERAL:
-                if(GetSimulationVariable(a->name1) !=
-                    a->literal && a->name1[0] != '$')
-                {
+                if(GetSimulationVariable(a->name1) != a->literal && a->name1[0] != '$') {
                     NeedRedraw = 2;
                 }
                 SetSimulationVariable(a->name1, a->literal);
                 break;
 
-            #ifdef USE_SFR
+#ifdef USE_SFR
             case INT_READ_SFR_LITERAL:
                 SetSimulationVariable(a->name1, GetAdcShadow(a->name1));
                 break;
@@ -1462,28 +1477,28 @@ static void SimulateIntCode(void)
                 SetSimulationVariable(a->name2, GetAdcShadow(a->name2));
                 break;
 
-            case  INT_WRITE_SFR_LITERAL:
-            case  INT_SET_SFR_LITERAL:
-            case  INT_CLEAR_SFR_LITERAL:
-            case  INT_TEST_SFR_LITERAL:
-            case  INT_WRITE_SFR_VARIABLE:
-            case  INT_SET_SFR_VARIABLE:
-            case  INT_CLEAR_SFR_VARIABLE:
-            case  INT_TEST_SFR_VARIABLE:
-            case  INT_TEST_C_SFR_LITERAL:
-            case  INT_WRITE_SFR_LITERAL_L:
-            case  INT_WRITE_SFR_VARIABLE_L:
-            case  INT_SET_SFR_LITERAL_L:
-            case  INT_SET_SFR_VARIABLE_L:
-            case  INT_CLEAR_SFR_LITERAL_L:
-            case  INT_CLEAR_SFR_VARIABLE_L:
-            case  INT_TEST_SFR_LITERAL_L:
-            case  INT_TEST_SFR_VARIABLE_L:
-            case  INT_TEST_C_SFR_VARIABLE:
-            case  INT_TEST_C_SFR_LITERAL_L:
-            case  INT_TEST_C_SFR_VARIABLE_L:
+            case INT_WRITE_SFR_LITERAL:
+            case INT_SET_SFR_LITERAL:
+            case INT_CLEAR_SFR_LITERAL:
+            case INT_TEST_SFR_LITERAL:
+            case INT_WRITE_SFR_VARIABLE:
+            case INT_SET_SFR_VARIABLE:
+            case INT_CLEAR_SFR_VARIABLE:
+            case INT_TEST_SFR_VARIABLE:
+            case INT_TEST_C_SFR_LITERAL:
+            case INT_WRITE_SFR_LITERAL_L:
+            case INT_WRITE_SFR_VARIABLE_L:
+            case INT_SET_SFR_LITERAL_L:
+            case INT_SET_SFR_VARIABLE_L:
+            case INT_CLEAR_SFR_LITERAL_L:
+            case INT_CLEAR_SFR_VARIABLE_L:
+            case INT_TEST_SFR_LITERAL_L:
+            case INT_TEST_SFR_VARIABLE_L:
+            case INT_TEST_C_SFR_VARIABLE:
+            case INT_TEST_C_SFR_LITERAL_L:
+            case INT_TEST_C_SFR_VARIABLE_L:
                 break;
-            #endif
+#endif
 
             case INT_SET_BIN2BCD: {
                 int var2 = bin2bcd(GetSimulationVariable(a->name2));
@@ -1504,7 +1519,7 @@ static void SimulateIntCode(void)
             }
 
             case INT_SET_OPPOSITE: {
-                int var2 = opposite(GetSimulationVariable(a->name2),SizeOfVar(a->name2));
+                int var2 = opposite(GetSimulationVariable(a->name2), SizeOfVar(a->name2));
                 if(GetSimulationVariable(a->name1) != var2) {
                     NeedRedraw = 5;
                     SetSimulationVariable(a->name1, var2);
@@ -1513,7 +1528,7 @@ static void SimulateIntCode(void)
             }
 
             case INT_SET_SWAP: {
-                int var2 = swap(GetSimulationVariable(a->name2),SizeOfVar(a->name2));
+                int var2 = swap(GetSimulationVariable(a->name2), SizeOfVar(a->name2));
                 if(GetSimulationVariable(a->name1) != var2) {
                     NeedRedraw = 5;
                     SetSimulationVariable(a->name1, var2);
@@ -1522,13 +1537,10 @@ static void SimulateIntCode(void)
             }
 
             case INT_SET_VARIABLE_TO_VARIABLE:
-                if(GetSimulationVariable(a->name1) !=
-                    GetSimulationVariable(a->name2))
-                {
+                if(GetSimulationVariable(a->name1) != GetSimulationVariable(a->name2)) {
                     NeedRedraw = 6;
                 }
-                SetSimulationVariable(a->name1,
-                    GetSimulationVariable(a->name2));
+                SetSimulationVariable(a->name1, GetSimulationVariable(a->name2));
                 break;
 
             case INT_INCREMENT_VARIABLE:
@@ -1540,92 +1552,104 @@ static void SimulateIntCode(void)
                 Decrement(a->name1, a->name2, "ROverflowFlagV");
                 NeedRedraw = 8;
                 break;
-            {
-                SDWORD v;
-                BOOL state;
-                case INT_SET_VARIABLE_SR0:
-                    v = sr0(GetSimulationVariable(a->name2), GetSimulationVariable(a->name3), SizeOfVar(a->name2), &state);
-                    SetSingleBit(a->name4, state);
-                    goto math;
-                case INT_SET_VARIABLE_ROL:
-                    v = rol(GetSimulationVariable(a->name2), GetSimulationVariable(a->name3), SizeOfVar(a->name2), &state);
-                    SetSingleBit(a->name4, state);
-                    goto math;
-                case INT_SET_VARIABLE_ROR:
-                    v = ror(GetSimulationVariable(a->name2), GetSimulationVariable(a->name3), SizeOfVar(a->name2), &state);
-                    SetSingleBit(a->name4, state);
-                    goto math;
-                case INT_SET_VARIABLE_SHL:
-                    v = shl(GetSimulationVariable(a->name2), GetSimulationVariable(a->name3), SizeOfVar(a->name2), &state);
-                    SetSingleBit(a->name4, state);
-                    goto math;
-                case INT_SET_VARIABLE_SHR:
-                    v = shr(GetSimulationVariable(a->name2), GetSimulationVariable(a->name3), SizeOfVar(a->name2), &state);
-                    SetSingleBit(a->name4, state);
-                    goto math;
-                case INT_SET_VARIABLE_AND:
-                    v = GetSimulationVariable(a->name2) &
-                        GetSimulationVariable(a->name3);
-                    goto math;
-                case INT_SET_VARIABLE_OR:
-                    v = GetSimulationVariable(a->name2) |
-                        GetSimulationVariable(a->name3);
-                    goto math;
-                case INT_SET_VARIABLE_XOR:
-                    v = GetSimulationVariable(a->name2) ^
-                        GetSimulationVariable(a->name3);
-                    goto math;
-                case INT_SET_VARIABLE_NOT:
-                    v = ~ GetSimulationVariable(a->name2);
-                    goto math;
-                case INT_SET_VARIABLE_RANDOM:
-                    v = GetRandom(a->name1);
-                    goto math;
-                case INT_SET_VARIABLE_NEG:
-                    v = - GetSimulationVariable(a->name2);
-                    goto math;
-                case INT_SET_VARIABLE_ADD:
-                    v = AddVariable(a->name1, a->name2, a->name3, "ROverflowFlagV");
-                    goto math;
-                case INT_SET_VARIABLE_SUBTRACT:
-                    v = SubVariable(a->name1, a->name2, a->name3, "ROverflowFlagV");
-                    goto math;
-                case INT_SET_VARIABLE_MULTIPLY:
-                    v = GetSimulationVariable(a->name2) *
-                        GetSimulationVariable(a->name3);
-                    goto math;
 
-                case INT_SET_VARIABLE_MOD:
-                case INT_SET_VARIABLE_DIVIDE:
-                    if(GetSimulationVariable(a->name3) != 0) {
-                      if(a->op == INT_SET_VARIABLE_DIVIDE)
-                        v = GetSimulationVariable(a->name2) /
-                            GetSimulationVariable(a->name3);
-                      else
-                        v = GetSimulationVariable(a->name2) %
-                            GetSimulationVariable(a->name3);
-                    } else {
-                        v = 0;
-                        Error(_("Division by zero; halting simulation"));
-                        StopSimulation();
-                    }
-                    goto math;
-            math:
-                    int sov = SizeOfVar(a->name1);
-                    v &= (1 << (8 * sov)) - 1;
-                    if(GetSimulationVariable(a->name1) != v) {
-                        NeedRedraw = 9;
-                        SetSimulationVariable(a->name1, v);
-                    }
-                    break;
-            }
-            //vvv
-            #define IF_BODY \
-                { \
-                    IfConditionTrue(); \
-                } else { \
-                    IfConditionFalse(); \
+                {
+                    SDWORD v;
+                    BOOL   state;
+                    case INT_SET_VARIABLE_SR0:
+                        v = sr0(GetSimulationVariable(a->name2),
+                                GetSimulationVariable(a->name3),
+                                SizeOfVar(a->name2),
+                                &state);
+                        SetSingleBit(a->name4, state);
+                        goto math;
+                    case INT_SET_VARIABLE_ROL:
+                        v = rol(GetSimulationVariable(a->name2),
+                                GetSimulationVariable(a->name3),
+                                SizeOfVar(a->name2),
+                                &state);
+                        SetSingleBit(a->name4, state);
+                        goto math;
+                    case INT_SET_VARIABLE_ROR:
+                        v = ror(GetSimulationVariable(a->name2),
+                                GetSimulationVariable(a->name3),
+                                SizeOfVar(a->name2),
+                                &state);
+                        SetSingleBit(a->name4, state);
+                        goto math;
+                    case INT_SET_VARIABLE_SHL:
+                        v = shl(GetSimulationVariable(a->name2),
+                                GetSimulationVariable(a->name3),
+                                SizeOfVar(a->name2),
+                                &state);
+                        SetSingleBit(a->name4, state);
+                        goto math;
+                    case INT_SET_VARIABLE_SHR:
+                        v = shr(GetSimulationVariable(a->name2),
+                                GetSimulationVariable(a->name3),
+                                SizeOfVar(a->name2),
+                                &state);
+                        SetSingleBit(a->name4, state);
+                        goto math;
+                    case INT_SET_VARIABLE_AND:
+                        v = GetSimulationVariable(a->name2) & GetSimulationVariable(a->name3);
+                        goto math;
+                    case INT_SET_VARIABLE_OR:
+                        v = GetSimulationVariable(a->name2) | GetSimulationVariable(a->name3);
+                        goto math;
+                    case INT_SET_VARIABLE_XOR:
+                        v = GetSimulationVariable(a->name2) ^ GetSimulationVariable(a->name3);
+                        goto math;
+                    case INT_SET_VARIABLE_NOT:
+                        v = ~GetSimulationVariable(a->name2);
+                        goto math;
+                    case INT_SET_VARIABLE_RANDOM:
+                        v = GetRandom(a->name1);
+                        goto math;
+                    case INT_SET_VARIABLE_NEG:
+                        v = -GetSimulationVariable(a->name2);
+                        goto math;
+                    case INT_SET_VARIABLE_ADD:
+                        v = AddVariable(a->name1, a->name2, a->name3, "ROverflowFlagV");
+                        goto math;
+                    case INT_SET_VARIABLE_SUBTRACT:
+                        v = SubVariable(a->name1, a->name2, a->name3, "ROverflowFlagV");
+                        goto math;
+                    case INT_SET_VARIABLE_MULTIPLY:
+                        v = GetSimulationVariable(a->name2) * GetSimulationVariable(a->name3);
+                        goto math;
+
+                    case INT_SET_VARIABLE_MOD:
+                    case INT_SET_VARIABLE_DIVIDE:
+                        if(GetSimulationVariable(a->name3) != 0) {
+                            if(a->op == INT_SET_VARIABLE_DIVIDE)
+                                v = GetSimulationVariable(a->name2) / GetSimulationVariable(a->name3);
+                            else
+                                v = GetSimulationVariable(a->name2) % GetSimulationVariable(a->name3);
+                        } else {
+                            v = 0;
+                            Error(_("Division by zero; halting simulation"));
+                            StopSimulation();
+                        }
+                        goto math;
+                    math:
+                        int sov = SizeOfVar(a->name1);
+                        v &= (1 << (8 * sov)) - 1;
+                        if(GetSimulationVariable(a->name1) != v) {
+                            NeedRedraw = 9;
+                            SetSimulationVariable(a->name1, v);
+                        }
+                        break;
                 }
+//vvv
+#define IF_BODY             \
+    {                       \
+        IfConditionTrue();  \
+    }                       \
+    else                    \
+    {                       \
+        IfConditionFalse(); \
+    }
             //^^^
             case INT_IF_BIT_SET:
                 if(SingleBitOn(a->name1))
@@ -1649,7 +1673,8 @@ static void SimulateIntCode(void)
                     v1 |= 1 << v2;
                 else if(a->op == INT_VARIABLE_CLEAR_BIT)
                     v1 &= ~(1 << v2);
-                else oops();
+                else
+                    oops();
                 if(GetSimulationVariable(a->name1) != v1) {
                     SetSimulationVariable(a->name1, v1);
                     NeedRedraw = 99;
@@ -1680,73 +1705,63 @@ static void SimulateIntCode(void)
                 break;
             }
             case INT_IF_BITS_SET_IN_VAR:
-                if((GetSimulationVariable(a->name1)
-                & hobatoi(a->name2)) == hobatoi(a->name2))
+                if((GetSimulationVariable(a->name1) & hobatoi(a->name2)) == hobatoi(a->name2))
                     IF_BODY
                 break;
 
             case INT_IF_BITS_CLEAR_IN_VAR:
-                if((GetSimulationVariable(a->name1)
-                & hobatoi(a->name2)) == 0)
+                if((GetSimulationVariable(a->name1) & hobatoi(a->name2)) == 0)
                     IF_BODY
                 break;
 
-            #ifdef NEW_CMP
+#ifdef NEW_CMP
             case INT_IF_GRT:
-                if(GetSimulationVariable(a->name1)
-                >  GetSimulationVariable(a->name2))
+                if(GetSimulationVariable(a->name1) > GetSimulationVariable(a->name2))
                     IF_BODY
                 break;
 
             case INT_IF_GEQ:
-                if(GetSimulationVariable(a->name1)
-                >= GetSimulationVariable(a->name2))
+                if(GetSimulationVariable(a->name1) >= GetSimulationVariable(a->name2))
                     IF_BODY
                 break;
 
             case INT_IF_LES:
-                if(GetSimulationVariable(a->name1)
-                <  GetSimulationVariable(a->name2))
+                if(GetSimulationVariable(a->name1) < GetSimulationVariable(a->name2))
                     IF_BODY
                 break;
 
             case INT_IF_LEQ:
-                if(GetSimulationVariable(a->name1)
-                <= GetSimulationVariable(a->name2))
+                if(GetSimulationVariable(a->name1) <= GetSimulationVariable(a->name2))
                     IF_BODY
                 break;
 
             case INT_IF_NEQ:
-                if(GetSimulationVariable(a->name1)
-                != GetSimulationVariable(a->name2))
+                if(GetSimulationVariable(a->name1) != GetSimulationVariable(a->name2))
                     IF_BODY
                 break;
 
             case INT_IF_EQU:
-                if(GetSimulationVariable(a->name1)
-                == GetSimulationVariable(a->name2))
+                if(GetSimulationVariable(a->name1) == GetSimulationVariable(a->name2))
                     IF_BODY
                 break;
-            #endif
+#endif
 
-            #ifndef NEW_CMP
+#ifndef NEW_CMP
             case INT_IF_VARIABLE_LES_LITERAL:
                 if(GetSimulationVariable(a->name1) < a->literal)
                     IF_BODY
                 break;
 
             case INT_IF_VARIABLE_EQUALS_VARIABLE:
-                if(GetSimulationVariable(a->name1) ==
-                    GetSimulationVariable(a->name2))
+                if(GetSimulationVariable(a->name1) == GetSimulationVariable(a->name2))
                     IF_BODY
                 break;
 
             case INT_IF_VARIABLE_GRT_VARIABLE:
-                if(GetSimulationVariable(a->name1) >
-                    GetSimulationVariable(a->name2))
+                if(GetSimulationVariable(a->name1) > GetSimulationVariable(a->name2))
                     IF_BODY
                 break;
-            #endif
+#endif
 
             case INT_QUAD_ENCOD:
             case INT_SET_NPULSE:
@@ -1783,15 +1798,13 @@ static void SimulateIntCode(void)
             case INT_UART_SEND1:
                 if(SimulateUartTxCountdown == 0) {
                     SimulateUartTxCountdown = 2;
-                    AppendToUartSimulationTextControl(
-                        (BYTE)GetSimulationVariable(a->name1));
+                    AppendToUartSimulationTextControl((BYTE)GetSimulationVariable(a->name1));
                 }
                 break;
             case INT_UART_SEND:
                 if(SingleBitOn(a->name2) && (SimulateUartTxCountdown == 0)) {
                     SimulateUartTxCountdown = 2;
-                    AppendToUartSimulationTextControl(
-                        (BYTE)GetSimulationVariable(a->name1));
+                    AppendToUartSimulationTextControl((BYTE)GetSimulationVariable(a->name1));
                 }
                 if(SimulateUartTxCountdown > 0) {
                     SetSingleBit(a->name2, TRUE); // busy
@@ -1848,7 +1861,7 @@ static void SimulateIntCode(void)
             case INT_GOTO:
                 if(a->poweredAfter) {
                     if(*(a->poweredAfter)) {
-                        IntPc = FindOpRung(INT_FwdAddrIsNow, a->literal/*, a->name1*/);
+                        IntPc = FindOpRung(INT_FwdAddrIsNow, a->literal /*, a->name1*/);
                     }
                 }
                 break;
@@ -1856,8 +1869,8 @@ static void SimulateIntCode(void)
             case INT_GOSUB:
                 if(a->poweredAfter) {
                     if(*(a->poweredAfter)) {
-                        PushStack(IntPc+1);
-                        IntPc = FindOpRung(INT_FwdAddrIsNow, a->literal/*, a->name1*/);
+                        PushStack(IntPc + 1);
+                        IntPc = FindOpRung(INT_FwdAddrIsNow, a->literal /*, a->name1*/);
                     }
                 }
                 break;
@@ -1870,23 +1883,23 @@ static void SimulateIntCode(void)
                 }
                 break;
 
-            #ifdef NEW_FEATURE
+#ifdef NEW_FEATURE
             case INT_PRINTF_STRING:
                 break;
-            #endif
+#endif
 
-            #define SPINTF(buffer, format, args) sprintf(buffer, format, #args);
+#define SPINTF(buffer, format, args) sprintf(buffer, format, #args);
             case INT_WRITE_STRING: {
                 break;
             }
-            #ifdef TABLE_IN_FLASH
+#ifdef TABLE_IN_FLASH
             case INT_FLASH_INIT:
                 if(!GetSimulationVariable(a->name1)) {
-                    SetSimulationVariable(a->name1, (SDWORD)&(a->data[0]));
+                    SetSimulationVariable(a->name1, (SDWORD) & (a->data[0]));
                 }
                 break;
 
-            case INT_FLASH_READ:{
+            case INT_FLASH_READ: {
                 SDWORD *adata;
                 adata = (SDWORD *)GetSimulationVariable(a->name2);
                 if(adata == NULL) {
@@ -1896,8 +1909,8 @@ static void SimulateIntCode(void)
                     break;
                 }
                 int index = GetSimulationVariable(a->name3);
-                if((index < 0)||(a->literal <= index)) {
-                    Error("Index=%d out of range for TABLE %s[0..%d]", index, a->name2, a->literal-1);
+                if((index < 0) || (a->literal <= index)) {
+                    Error("Index=%d out of range for TABLE %s[0..%d]", index, a->name2, a->literal - 1);
                     index = a->literal;
                     StopSimulation();
                     ToggleSimulationMode(FALSE);
@@ -1908,12 +1921,11 @@ static void SimulateIntCode(void)
                     SetSimulationVariable(a->name1, d);
                     NeedRedraw = 10;
                 }
-                }
-                break;
+            } break;
 
-            case INT_RAM_READ:{
+            case INT_RAM_READ: {
                 int index = GetSimulationVariable(a->name3);
-                if((index<0)||(a->literal<=index)) {
+                if((index < 0) || (a->literal <= index)) {
                     Error("Index=%d out of range for string %s[%d]", index, a->name1, a->literal);
                     index = a->literal;
                     StopSimulation();
@@ -1924,9 +1936,8 @@ static void SimulateIntCode(void)
                     SetSimulationVariable(a->name2, d);
                     NeedRedraw = 11;
                 }
-                }
-                break;
-            #endif
+            } break;
+#endif
 
             case INT_DELAY:
             case INT_SLEEP:
@@ -1936,7 +1947,7 @@ static void SimulateIntCode(void)
                 break;
 
             default:
-                ooops("op=%d",a->op);
+                ooops("op=%d", a->op);
                 break;
         }
     }
@@ -1974,7 +1985,8 @@ void SimulateOneCycle(BOOL forceRefresh)
     // would get called recursively, not just reentrantly.)
     static BOOL Simulating = FALSE;
 
-    if(Simulating) return;
+    if(Simulating)
+        return;
     Simulating = TRUE;
 
     NeedRedraw = FALSE;
@@ -1997,8 +2009,7 @@ void SimulateOneCycle(BOOL forceRefresh)
     SimulateIntCode();
 
     for(i = 0; i < IntCodeLen; i++) {
-        if((IntCode[i].op != INT_AllocFwdAddr)
-        && (IntCode[i].simulated)) {
+        if((IntCode[i].op != INT_AllocFwdAddr) && (IntCode[i].simulated)) {
             if((IntCode[i].rung >= 0) && (IntCode[i].rung < Prog.numRungs)) {
                 Prog.rungSimulated[IntCode[i].rung] = TRUE;
             }
@@ -2018,12 +2029,12 @@ void SimulateOneCycle(BOOL forceRefresh)
             InvalidateRect(MainWindow, NULL, FALSE);
         }
         ListView_RedrawItems(IoList, 0, Prog.io.count - 1);
-
     }
     RefreshStatusBar();
 
     SimulateRedrawAfterNextCycle = FALSE;
-    if(NeedRedraw) SimulateRedrawAfterNextCycle = TRUE;
+    if(NeedRedraw)
+        SimulateRedrawAfterNextCycle = TRUE;
 
     Simulating = FALSE;
 }
@@ -2036,7 +2047,7 @@ void SimulateOneCycle(BOOL forceRefresh)
 //-----------------------------------------------------------------------------
 void StartSimulationTimer(void)
 {
-    int p = (int)(Prog.cycleTime/1000);
+    int p = (int)(Prog.cycleTime / 1000);
     if(p < 5) {
         SetTimer(MainWindow, TIMER_SIMULATE, 10, PlcCycleTimer);
         if(Prog.cycleTime > 0)
@@ -2112,20 +2123,20 @@ void DescribeForIoList(char *name, int type, char *out)
             sprintf(out, "%d", SingleBitOn(name));
             break;
 
-       case IO_TYPE_SPI_MOSI:
-       case IO_TYPE_SPI_MISO:
-       case IO_TYPE_SPI_SCK :
-       case IO_TYPE_SPI__SS :
+        case IO_TYPE_SPI_MOSI:
+        case IO_TYPE_SPI_MISO:
+        case IO_TYPE_SPI_SCK:
+        case IO_TYPE_SPI__SS:
             break;
 
         case IO_TYPE_PWM_OUTPUT:
-            #if 0
+#if 0
             sprintf(out, "PWM");
-            #else
+#else
             char s[MAX_NAME_LEN];
             sprintf(s, "$%s", name);
             sprintf(out, "%s", SingleBitOn(s) ? "ON" : "OFF");
-            #endif
+#endif
             break;
 
         case IO_TYPE_STRING:
@@ -2144,45 +2155,46 @@ void DescribeForIoList(char *name, int type, char *out)
         case IO_TYPE_RTL:
         case IO_TYPE_RTO: {
             SDWORD v = GetSimulationVariable(name, TRUE);
-            double dtms = v *
-                (Prog.cycleTime / 1000.0);
-            int sov = SizeOfVar(name);
+            double dtms = v * (Prog.cycleTime / 1000.0);
+            int    sov = SizeOfVar(name);
             if(dtms < 1000) {
-              if(sov == 1)
-                sprintf(out, "0x%02X = %d = %.6g ms", v & 0xff, v, dtms);
-              else if(sov == 2)
-                sprintf(out, "0x%04X = %d = %.6g ms", v & 0xffff, v, dtms);
-              else if(sov == 3)
-                sprintf(out, "0x%06X = %d = %.6g ms", v & 0xFFffff, v, dtms);
-              else if(sov == 4)
-                sprintf(out, "0x%08X = %d = %.6g ms", v, v, dtms);
-              else oops();
+                if(sov == 1)
+                    sprintf(out, "0x%02X = %d = %.6g ms", v & 0xff, v, dtms);
+                else if(sov == 2)
+                    sprintf(out, "0x%04X = %d = %.6g ms", v & 0xffff, v, dtms);
+                else if(sov == 3)
+                    sprintf(out, "0x%06X = %d = %.6g ms", v & 0xFFffff, v, dtms);
+                else if(sov == 4)
+                    sprintf(out, "0x%08X = %d = %.6g ms", v, v, dtms);
+                else
+                    oops();
             } else {
-              if(sov == 1)
-                sprintf(out, "0x%02X = %d = %.6g s", v & 0xff, v, dtms / 1000);
-              else if(sov == 2)
-                sprintf(out, "0x%04X = %d = %.6g s", v & 0xffff, v, dtms / 1000);
-              else if(sov == 3)
-                sprintf(out, "0x%06X = %d = %.6g s", v & 0xFFffff, v, dtms / 1000);
-              else if(sov == 4)
-                sprintf(out, "0x%08X = %d = %.6g s", v, v, dtms / 1000);
-              else oops();
+                if(sov == 1)
+                    sprintf(out, "0x%02X = %d = %.6g s", v & 0xff, v, dtms / 1000);
+                else if(sov == 2)
+                    sprintf(out, "0x%04X = %d = %.6g s", v & 0xffff, v, dtms / 1000);
+                else if(sov == 3)
+                    sprintf(out, "0x%06X = %d = %.6g s", v & 0xFFffff, v, dtms / 1000);
+                else if(sov == 4)
+                    sprintf(out, "0x%08X = %d = %.6g s", v, v, dtms / 1000);
+                else
+                    oops();
             }
             break;
         }
         default: {
             SDWORD v = GetSimulationVariable(name, TRUE);
-            int sov = SizeOfVar(name);
+            int    sov = SizeOfVar(name);
             if(sov == 1)
-              sprintf(out, "0x%02X = %d = '%c'", v & 0xff, (signed char)v, v & 0xff);
+                sprintf(out, "0x%02X = %d = '%c'", v & 0xff, (signed char)v, v & 0xff);
             else if(sov == 2)
-              sprintf(out, "0x%04X = %d", v & 0xffff, (SWORD)v);
+                sprintf(out, "0x%04X = %d", v & 0xffff, (SWORD)v);
             else if(sov == 3)
-              sprintf(out, "0x%06X = %d", v & 0xFFffff, SDWORD3(v));
+                sprintf(out, "0x%06X = %d", v & 0xFFffff, SDWORD3(v));
             else if(sov == 4)
-              sprintf(out, "0x%08X = %d", v, v);
+                sprintf(out, "0x%08X = %d", v, v);
             else {
-              sprintf(out, "0x%X = %d", v, v);
+                sprintf(out, "0x%X = %d", v, v);
             }
             break;
         }
@@ -2202,10 +2214,9 @@ void SimulationToggleContact(char *name)
 //-----------------------------------------------------------------------------
 // Dialog proc for the popup that lets you interact with the UART stuff.
 //-----------------------------------------------------------------------------
-static LRESULT CALLBACK UartSimulationProc(HWND hwnd, UINT msg,
-    WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK UartSimulationProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    switch (msg) {
+    switch(msg) {
         case WM_DESTROY:
             DestroyUartSimulationWindow();
             break;
@@ -2214,8 +2225,7 @@ static LRESULT CALLBACK UartSimulationProc(HWND hwnd, UINT msg,
             break;
 
         case WM_SIZE:
-            MoveWindow(UartSimulationTextControl, 0, 0, LOWORD(lParam),
-                HIWORD(lParam), TRUE);
+            MoveWindow(UartSimulationTextControl, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
             break;
 
         case WM_ACTIVATE:
@@ -2234,18 +2244,17 @@ static LRESULT CALLBACK UartSimulationProc(HWND hwnd, UINT msg,
 // Intercept WM_CHAR messages that to the terminal simulation window so that
 // we can redirect them to the PLC program.
 //-----------------------------------------------------------------------------
-static LRESULT CALLBACK UartSimulationTextProc(HWND hwnd, UINT msg,
-    WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK UartSimulationTextProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    switch (msg) {
+    switch(msg) {
         case WM_KEYDOWN:
             // vvv copy-paste from ldmicro.cpp
             if(InSimulationMode) {
                 switch(wParam) {
-//                  key ' ',Enter-VK_RETURN must be available for simulation input
-//                  case ' ':
-//                      SimulateOneCycle(TRUE);
-//                      break;
+                        //                  key ' ',Enter-VK_RETURN must be available for simulation input
+                        //                  case ' ':
+                        //                      SimulateOneCycle(TRUE);
+                        //                      break;
 
                     case VK_F8:
                         StartSimulation();
@@ -2265,7 +2274,7 @@ static LRESULT CALLBACK UartSimulationTextProc(HWND hwnd, UINT msg,
                             StopSimulation();
                         break;
 
-//                  case VK_RETURN:
+                        //                  case VK_RETURN:
                     case VK_ESCAPE:
                         ToggleSimulationMode();
                         break;
@@ -2290,6 +2299,7 @@ static LRESULT CALLBACK UartSimulationTextProc(HWND hwnd, UINT msg,
 //-----------------------------------------------------------------------------
 #define MAX_SCROLLBACK 0x10000 //256 // 0x10000
 static char buf[MAX_SCROLLBACK] = "";
+
 void ShowUartSimulationWindow(void)
 {
     if(UartSimulationWindow != NULL)
@@ -2298,14 +2308,13 @@ void ShowUartSimulationWindow(void)
     memset(&wc, 0, sizeof(wc));
     wc.cbSize = sizeof(wc);
 
-    wc.style            = CS_BYTEALIGNCLIENT | CS_BYTEALIGNWINDOW | CS_OWNDC |
-                            CS_DBLCLKS;
-    wc.lpfnWndProc      = (WNDPROC)UartSimulationProc;
-    wc.hInstance        = Instance;
-    wc.hbrBackground    = (HBRUSH)COLOR_BTNSHADOW;
-    wc.lpszClassName    = "LDmicroUartSimulationWindow";
-    wc.lpszMenuName     = NULL;
-    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
+    wc.style = CS_BYTEALIGNCLIENT | CS_BYTEALIGNWINDOW | CS_OWNDC | CS_DBLCLKS;
+    wc.lpfnWndProc = (WNDPROC)UartSimulationProc;
+    wc.hInstance = Instance;
+    wc.hbrBackground = (HBRUSH)COLOR_BTNSHADOW;
+    wc.lpszClassName = "LDmicroUartSimulationWindow";
+    wc.lpszMenuName = NULL;
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 
     RegisterClassEx(&wc);
 
@@ -2316,39 +2325,67 @@ void ShowUartSimulationWindow(void)
     ThawDWORD(TerminalW);
     ThawDWORD(TerminalH);
 
-    if(TerminalW > 800) TerminalW = 100;
-    if(TerminalH > 800) TerminalH = 100;
+    if(TerminalW > 800)
+        TerminalW = 100;
+    if(TerminalH > 800)
+        TerminalH = 100;
 
     RECT r;
     GetClientRect(GetDesktopWindow(), &r);
-    if(TerminalX >= (DWORD)(r.right - 10)) TerminalX = 100;
-    if(TerminalY >= (DWORD)(r.bottom - 10)) TerminalY = 100;
+    if(TerminalX >= (DWORD)(r.right - 10))
+        TerminalX = 100;
+    if(TerminalY >= (DWORD)(r.bottom - 10))
+        TerminalY = 100;
 
-    fUART = fopen("uart.log","w");
+    fUART = fopen("uart.log", "w");
 
-    UartSimulationWindow = CreateWindowClient(WS_EX_TOOLWINDOW |
-        WS_EX_APPWINDOW, "LDmicroUartSimulationWindow",
-        "UART Simulation (Terminal)", WS_VISIBLE | WS_SIZEBOX
-        | WS_MAXIMIZEBOX | WS_MINIMIZEBOX,
-        TerminalX, TerminalY, TerminalW, TerminalH,
-        NULL, NULL, Instance, NULL);
+    UartSimulationWindow = CreateWindowClient(WS_EX_TOOLWINDOW | WS_EX_APPWINDOW,
+                                              "LDmicroUartSimulationWindow",
+                                              "UART Simulation (Terminal)",
+                                              WS_VISIBLE | WS_SIZEBOX | WS_MAXIMIZEBOX | WS_MINIMIZEBOX,
+                                              TerminalX,
+                                              TerminalY,
+                                              TerminalW,
+                                              TerminalH,
+                                              NULL,
+                                              NULL,
+                                              Instance,
+                                              NULL);
 
-    UartSimulationTextControl = CreateWindowEx(0, WC_EDIT, "", WS_CHILD |
-        WS_CLIPSIBLINGS | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE |
-        WS_VSCROLL, 0, 0, TerminalW, TerminalH, UartSimulationWindow, NULL,
-        Instance, NULL);
+    UartSimulationTextControl =
+        CreateWindowEx(0,
+                       WC_EDIT,
+                       "",
+                       WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | ES_AUTOVSCROLL | ES_MULTILINE | WS_VSCROLL,
+                       0,
+                       0,
+                       TerminalW,
+                       TerminalH,
+                       UartSimulationWindow,
+                       NULL,
+                       Instance,
+                       NULL);
 
-    HFONT fixedFont = CreateFont(14, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
-        ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-        FF_DONTCARE, "Lucida Console");
+    HFONT fixedFont = CreateFont(14,
+                                 0,
+                                 0,
+                                 0,
+                                 FW_REGULAR,
+                                 FALSE,
+                                 FALSE,
+                                 FALSE,
+                                 ANSI_CHARSET,
+                                 OUT_DEFAULT_PRECIS,
+                                 CLIP_DEFAULT_PRECIS,
+                                 DEFAULT_QUALITY,
+                                 FF_DONTCARE,
+                                 "Lucida Console");
     if(!fixedFont)
         fixedFont = (HFONT)GetStockObject(SYSTEM_FONT);
 
-    SendMessage((HWND)UartSimulationTextControl, WM_SETFONT, (WPARAM)fixedFont,
-        TRUE);
+    SendMessage((HWND)UartSimulationTextControl, WM_SETFONT, (WPARAM)fixedFont, TRUE);
 
-    PrevTextProc = SetWindowLongPtr(UartSimulationTextControl,
-        GWLP_WNDPROC, (LONG_PTR)UartSimulationTextProc);
+    PrevTextProc = SetWindowLongPtr(UartSimulationTextControl, GWLP_WNDPROC, (LONG_PTR)UartSimulationTextProc);
 
     strcpy(buf, "");
     SendMessage(UartSimulationTextControl, WM_SETTEXT, 0, (LPARAM)buf);
@@ -2369,10 +2406,11 @@ void DestroyUartSimulationWindow(void)
     //if(UartSimulationWindow == NULL) return;
     if(UartSimulationWindow != NULL) {
 
-        if(fUART) fclose(fUART);
+        if(fUART)
+            fclose(fUART);
 
         DWORD TerminalX, TerminalY, TerminalW, TerminalH;
-        RECT r;
+        RECT  r;
 
         GetClientRect(UartSimulationWindow, &r);
         TerminalW = r.right - r.left;
@@ -2396,23 +2434,23 @@ void DestroyUartSimulationWindow(void)
 // Append a received character to the terminal buffer.
 //-----------------------------------------------------------------------------
 static SDWORD bPrev = 0;
-static void AppendToUartSimulationTextControl(BYTE b)
+static void   AppendToUartSimulationTextControl(BYTE b)
 {
     char append[50];
 
-    if((isalnum(b) || strchr("[]{};':\",.<>/?`~ !@#$%^&*()-=_+|", b) ||
-           b == '\r' || b == '\n' || b == '\b' || b == '\f' || b == '\t' || b == '\v' || b == '\a') && b != '\0')
-    {
+    if((isalnum(b) || strchr("[]{};':\",.<>/?`~ !@#$%^&*()-=_+|", b) || b == '\r' || b == '\n' || b == '\b' || b == '\f'
+        || b == '\t' || b == '\v' || b == '\a')
+       && b != '\0') {
         append[0] = (char)b;
         append[1] = '\0';
     } else {
         sprintf(append, "\\x%02x", b);
     }
 
-    if(fUART) fprintf(fUART, "%s", append);
+    if(fUART)
+        fprintf(fUART, "%s", append);
 
-    SendMessage(UartSimulationTextControl, WM_GETTEXT, (WPARAM)(sizeof(buf)-1),
-        (LPARAM)buf);
+    SendMessage(UartSimulationTextControl, WM_GETTEXT, (WPARAM)(sizeof(buf) - 1), (LPARAM)buf);
 
     // vvv // This patch only for simulation mode and for WC_EDIT control.
     // Compared with Windows HyperTerminal and Putty.
@@ -2425,40 +2463,40 @@ static void AppendToUartSimulationTextControl(BYTE b)
         // but in simulation window "\r\n" more like as HyperTerminal and Putty.
         strcpy(append, "\r\n");
     } else if(b == '\b') {
-        if(strlen(buf)>0)  {
+        if(strlen(buf) > 0) {
             // backspace delete last char
-            buf[strlen(buf)-1] = '\0';
+            buf[strlen(buf) - 1] = '\0';
             append[0] = '\0';
         }
     } else if(b == '\r') {
-        if(strlen(buf)>0) {
-          if(buf[strlen(buf)-1] == '\n') {
-              // LF CR -> CR LF
-              // "\n\r" -> "\r\n"
-              buf[strlen(buf)-1] = '\0';
-              strcpy(append, "\r\n");
-              b = '\0';
-          } else {
-              append[0] = '\0'; // Now, at current cycle, '\r' is suppressed.
-          }
+        if(strlen(buf) > 0) {
+            if(buf[strlen(buf) - 1] == '\n') {
+                // LF CR -> CR LF
+                // "\n\r" -> "\r\n"
+                buf[strlen(buf) - 1] = '\0';
+                strcpy(append, "\r\n");
+                b = '\0';
+            } else {
+                append[0] = '\0'; // Now, at current cycle, '\r' is suppressed.
+            }
         }
     }
 
     char *s;
 
-    if(bPrev == '\r') {  // Now, at the next cycle, '\r' is activated.
-      if(strlen(buf)>0) {
-        if(b == '\n') {
-            strcpy(append, "\r\n");
-            b = '\0';
-        } else {
-            if(s=strrchr(buf,'\n')) {
-                s[1] = '\0';
+    if(bPrev == '\r') { // Now, at the next cycle, '\r' is activated.
+        if(strlen(buf) > 0) {
+            if(b == '\n') {
+                strcpy(append, "\r\n");
+                b = '\0';
             } else {
-                buf[0] = '\0';
+                if(s = strrchr(buf, '\n')) {
+                    s[1] = '\0';
+                } else {
+                    buf[0] = '\0';
+                }
             }
         }
-      }
     }
     bPrev = b;
     // ^^^ // This patch only for simulation mode and for WC_EDIT control.
@@ -2468,7 +2506,6 @@ static void AppendToUartSimulationTextControl(BYTE b)
         memmove(buf, buf + overBy, strlen(buf));
     }
     strcat(buf, append);
-
 
     SendMessage(UartSimulationTextControl, WM_SETTEXT, 0, (LPARAM)buf);
     SendMessage(UartSimulationTextControl, EM_LINESCROLL, 0, (LPARAM)INT_MAX);

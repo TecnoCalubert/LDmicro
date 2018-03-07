@@ -37,16 +37,16 @@
 
 //-----------------------------------------------------------------------------
 #ifdef DEFAULT_PARALLEL_ALGORITHM
-int int_comment_level  = 1;
+int int_comment_level = 1;
 #else
-int int_comment_level  = 3;
+int int_comment_level = 3;
 //                       0 - no comments
 //                       1 = Release 2.3 comments
 //                       2 - more comments
 //                     * 3 - ELEM_XXX comments added
 #endif
 //-----------------------------------------------------------------------------
-int asm_comment_level  = 2;
+int asm_comment_level = 2;
 //                       0- no comment
 //                       1- intenal comments if exist
 //                     * 2- args
@@ -70,16 +70,16 @@ int asm_discover_names = 0;
 //-----------------------------------------------------------------------------
 
 DWORD addrRUartRecvErrorFlag;
-int    bitRUartRecvErrorFlag;
+int   bitRUartRecvErrorFlag;
 DWORD addrRUartSendErrorFlag;
-int    bitRUartSendErrorFlag;
+int   bitRUartSendErrorFlag;
 
-IntOp IntCode[MAX_INT_OPS];
-int IntCodeLen = 0;
-int ProgWriteP = 0;
-static SDWORD *Tdata;
-int rungNow = -INT_MAX;
-static int whichNow = -INT_MAX;
+IntOp            IntCode[MAX_INT_OPS];
+int              IntCodeLen = 0;
+int              ProgWriteP = 0;
+static SDWORD *  Tdata;
+int              rungNow = -INT_MAX;
+static int       whichNow = -INT_MAX;
 static ElemLeaf *leafNow = NULL;
 
 static DWORD GenSymCountParThis;
@@ -116,21 +116,25 @@ void IntDumpListing(char *outFile)
     int indent = 0;
     for(i = 0; i < IntCodeLen; ++i) {
 
-        if(IntCode[i].op == INT_END_IF) indent--;
-        if(IntCode[i].op == INT_ELSE) indent--;
+        if(IntCode[i].op == INT_END_IF)
+            indent--;
+        if(IntCode[i].op == INT_ELSE)
+            indent--;
 
         if(int_comment_level == 1) {
             fprintf(f, "%3d:", i);
         } else {
-            if(indent < 0) indent = 0;
-            if((IntCode[i].op != INT_SIMULATE_NODE_STATE)
-            && (IntCode[i].op != INT_AllocKnownAddr)
+            if(indent < 0)
+                indent = 0;
+            if((IntCode[i].op != INT_SIMULATE_NODE_STATE) //
+            && (IntCode[i].op != INT_AllocKnownAddr) //
             && (IntCode[i].op != INT_AllocFwdAddr))
                 fprintf(f, "%4d:", i);
         }
         int j;
         if((int_comment_level == 1) || (IntCode[i].op != INT_SIMULATE_NODE_STATE))
-        for(j = 0; j < indent; j++) fprintf(f, "    ");
+            for(j = 0; j < indent; j++)
+                fprintf(f, "    ");
 
         switch(IntCode[i].op) {
             case INT_SET_BIT:
@@ -142,149 +146,127 @@ void IntDumpListing(char *outFile)
                 break;
 
             case INT_COPY_BIT_TO_BIT:
-                fprintf(f, "let bit '%s' := '%s'", IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let bit '%s' := '%s'", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_COPY_NOT_BIT_TO_BIT:
-                fprintf(f, "let bit '%s' := ! '%s'", IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let bit '%s' := ! '%s'", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_COPY_XOR_BIT_TO_BIT:
-                fprintf(f, "let bit '%s' := '%s' ^ '%s'", IntCode[i].name1, IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let bit '%s' := '%s' ^ '%s'", IntCode[i].name1, IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_COPY_VAR_BIT_TO_VAR_BIT:
-                fprintf(f, "if ('%s' & (1<<%d)) {", IntCode[i].name2, IntCode[i].literal2); indent++;
+                fprintf(f, "if ('%s' & (1<<%d)) {", IntCode[i].name2, IntCode[i].literal2);
+                indent++;
                 fprintf(f, "  '%s' |= (1<<%d) } else {", IntCode[i].name1, IntCode[i].literal);
-                fprintf(f, "  '%s' &= ~(1<<%d) }", IntCode[i].name1, IntCode[i].literal); indent--;
+                fprintf(f, "  '%s' &= ~(1<<%d) }", IntCode[i].name1, IntCode[i].literal);
+                indent--;
                 break;
 
             case INT_SET_VARIABLE_TO_LITERAL:
-                fprintf(f, "let var '%s' := %d", IntCode[i].name1,
-                    IntCode[i].literal);
+                fprintf(f, "let var '%s' := %d", IntCode[i].name1, IntCode[i].literal);
                 break;
 
             case INT_SET_VARIABLE_TO_VARIABLE:
-                fprintf(f, "let var '%s' := '%s'", IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let var '%s' := '%s'", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_SET_BIN2BCD:
-                fprintf(f, "let var '%s' = bin2bcd('%s');", IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let var '%s' = bin2bcd('%s');", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_SET_BCD2BIN:
-                fprintf(f, "let var '%s' = bcd2bin('%s');", IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let var '%s' = bcd2bin('%s');", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_SET_OPPOSITE:
-                fprintf(f, "let var '%s' = opposite('%s');", IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let var '%s' = opposite('%s');", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_SET_VARIABLE_ROL:
-                fprintf(f, "let var '%s' := '%s' rol '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' rol '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_ROR:
-                fprintf(f, "let var '%s' := '%s' ror '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' ror '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_SHL:
-                fprintf(f, "let var '%s' := '%s' << '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' << '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_SHR:
-                fprintf(f, "let var '%s' := '%s' >> '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' >> '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_AND:
-                fprintf(f, "let var '%s' := '%s' & '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' & '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_OR:
-                fprintf(f, "let var '%s' := '%s' | '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' | '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_XOR:
-                fprintf(f, "let var '%s' := '%s' ^ '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' ^ '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_NOT:
-                fprintf(f, "let var '%s' := ~ '%s'", IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let var '%s' := ~ '%s'", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_SET_SWAP:
-                fprintf(f, "let var '%s' = swap('%s');", IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let var '%s' = swap('%s');", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_SET_VARIABLE_SR0:
-                fprintf(f, "let var '%s' := '%s' sr0 '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' sr0 '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_NEG:
-                fprintf(f, "let var '%s' := - '%s'", IntCode[i].name1,
-                    IntCode[i].name2);
+                fprintf(f, "let var '%s' := - '%s'", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_SET_VARIABLE_ADD:
-                fprintf(f, "let var '%s' := '%s' + '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' + '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 if(IntCode[i].name4 && strlen(IntCode[i].name4))
                     fprintf(f, "; copy overflow flag to '%s'", IntCode[i].name4);
                 break;
 
             case INT_SET_VARIABLE_SUBTRACT:
-                fprintf(f, "let var '%s' := '%s' - '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' - '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 if(IntCode[i].name4 && strlen(IntCode[i].name4))
                     fprintf(f, "; copy overflow flag to '%s'", IntCode[i].name4);
                 break;
 
             case INT_SET_VARIABLE_MULTIPLY:
-                fprintf(f, "let var '%s' := '%s' * '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' * '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_DIVIDE:
-                fprintf(f, "let var '%s' := '%s' / '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' / '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_SET_VARIABLE_MOD:
-                fprintf(f, "let var '%s' := '%s' % '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "let var '%s' := '%s' % '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_INCREMENT_VARIABLE:
                 fprintf(f, "increment '%s'", IntCode[i].name1);
                 if(IntCode[i].name2 && strlen(IntCode[i].name2))
-                fprintf(f, "; copy overlap(-1 to 0) flag to '%s'", IntCode[i].name2);
+                    fprintf(f, "; copy overlap(-1 to 0) flag to '%s'", IntCode[i].name2);
                 if(IntCode[i].name3 && strlen(IntCode[i].name3))
-                fprintf(f, "; copy overflow flag to '%s'", IntCode[i].name3);
+                    fprintf(f, "; copy overflow flag to '%s'", IntCode[i].name3);
                 break;
 
             case INT_DECREMENT_VARIABLE:
                 fprintf(f, "decrement '%s'", IntCode[i].name1);
                 if(IntCode[i].name2 && strlen(IntCode[i].name2))
-                fprintf(f, "; copy overlap(0 to -1) flag to '%s'", IntCode[i].name2);
+                    fprintf(f, "; copy overlap(0 to -1) flag to '%s'", IntCode[i].name2);
                 if(IntCode[i].name3 && strlen(IntCode[i].name3))
-                fprintf(f, "; copy overflow flag to '%s'", IntCode[i].name3);
+                    fprintf(f, "; copy overflow flag to '%s'", IntCode[i].name3);
                 break;
 
             case INT_READ_ADC:
@@ -300,18 +282,22 @@ void IntDumpListing(char *outFile)
                 break;
 
             case INT_SET_PWM:
-                fprintf(f, "set pwm '%s' %% %s Hz out '%s'", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "set pwm '%s' %% %s Hz out '%s'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_QUAD_ENCOD:
-                fprintf(f, "QUAD ENCOD %d %s %s %s %s %s", IntCode[i].literal, IntCode[i].name1, IntCode[i].name2,
-                  IntCode[i].name3, IntCode[i].name4, IntCode[i].name5);
+                fprintf(f,
+                        "QUAD ENCOD %d %s %s %s %s %s",
+                        IntCode[i].literal,
+                        IntCode[i].name1,
+                        IntCode[i].name2,
+                        IntCode[i].name3,
+                        IntCode[i].name4,
+                        IntCode[i].name5);
                 break;
 
             case INT_SET_NPULSE:
-                fprintf(f, "generate %s pulses %s Hz to %s", IntCode[i].name1,
-                    IntCode[i].name2, IntCode[i].name3);
+                fprintf(f, "generate %s pulses %s Hz to %s", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
             case INT_OFF_NPULSE:
@@ -326,43 +312,65 @@ void IntDumpListing(char *outFile)
                 fprintf(f, "set bit '%s' if EEPROM busy", IntCode[i].name1);
                 break;
 
-            case INT_EEPROM_READ:{
+            case INT_EEPROM_READ: {
                 int sov = SizeOfVar(IntCode[i].name1);
                 if(sov == 1)
-                    fprintf(f, "read EEPROM[%d] into '%s'",
-                        IntCode[i].literal, IntCode[i].name1);
+                    fprintf(f, "read EEPROM[%d] into '%s'", IntCode[i].literal, IntCode[i].name1);
                 else if(sov == 2)
-                    fprintf(f, "read EEPROM[%d,%d+1] into '%s'",
-                        IntCode[i].literal, IntCode[i].literal, IntCode[i].name1);
+                    fprintf(
+                        f, "read EEPROM[%d,%d+1] into '%s'", IntCode[i].literal, IntCode[i].literal, IntCode[i].name1);
                 else if(sov == 3)
-                    fprintf(f, "read EEPROM[%d,%d+1,%d+2] into '%s'",
-                        IntCode[i].literal, IntCode[i].literal, IntCode[i].literal, IntCode[i].name1);
+                    fprintf(f,
+                            "read EEPROM[%d,%d+1,%d+2] into '%s'",
+                            IntCode[i].literal,
+                            IntCode[i].literal,
+                            IntCode[i].literal,
+                            IntCode[i].name1);
                 else if(sov == 4)
-                    fprintf(f, "read EEPROM[%d,%d+1,%d+2,%d+3] into '%s'",
-                        IntCode[i].literal, IntCode[i].literal, IntCode[i].literal, IntCode[i].literal, IntCode[i].name1);
-                else oops();
+                    fprintf(f,
+                            "read EEPROM[%d,%d+1,%d+2,%d+3] into '%s'",
+                            IntCode[i].literal,
+                            IntCode[i].literal,
+                            IntCode[i].literal,
+                            IntCode[i].literal,
+                            IntCode[i].name1);
+                else
+                    oops();
                 break;
             }
-            case INT_EEPROM_WRITE:{
+            case INT_EEPROM_WRITE: {
                 int sov = SizeOfVar(IntCode[i].name1);
                 if(sov == 1)
-                    fprintf(f, "write '%s' into EEPROM[%d]",
-                        IntCode[i].name1, IntCode[i].literal);
+                    fprintf(f, "write '%s' into EEPROM[%d]", IntCode[i].name1, IntCode[i].literal);
                 else if(sov == 2)
-                    fprintf(f, "write '%s' into EEPROM[%d,%d+1]",
-                        IntCode[i].name1, IntCode[i].literal, IntCode[i].literal);
+                    fprintf(
+                        f, "write '%s' into EEPROM[%d,%d+1]", IntCode[i].name1, IntCode[i].literal, IntCode[i].literal);
                 else if(sov == 3)
-                    fprintf(f, "write '%s' into EEPROM[%d,%d+1,%d+2]",
-                        IntCode[i].name1, IntCode[i].literal, IntCode[i].literal, IntCode[i].literal);
+                    fprintf(f,
+                            "write '%s' into EEPROM[%d,%d+1,%d+2]",
+                            IntCode[i].name1,
+                            IntCode[i].literal,
+                            IntCode[i].literal,
+                            IntCode[i].literal);
                 else if(sov == 4)
-                    fprintf(f, "write '%s' into EEPROM[%d,%d+1,%d+2,%d+3]",
-                        IntCode[i].name1, IntCode[i].literal, IntCode[i].literal, IntCode[i].literal, IntCode[i].literal);
-                else oops();
+                    fprintf(f,
+                            "write '%s' into EEPROM[%d,%d+1,%d+2,%d+3]",
+                            IntCode[i].name1,
+                            IntCode[i].literal,
+                            IntCode[i].literal,
+                            IntCode[i].literal,
+                            IntCode[i].literal);
+                else
+                    oops();
                 break;
             }
             case INT_SPI:
-                fprintf(f, "SPI '%s' send '%s', recieve '%s', done? into '%s'",
-                    IntCode[i].name1, IntCode[i].name2, IntCode[i].name3, IntCode[i].name4);
+                fprintf(f,
+                        "SPI '%s' send '%s', recieve '%s', done? into '%s'",
+                        IntCode[i].name1,
+                        IntCode[i].name2,
+                        IntCode[i].name3,
+                        IntCode[i].name4);
                 break;
 
             case INT_UART_SEND1:
@@ -371,8 +379,7 @@ void IntDumpListing(char *outFile)
                 break;
 
             case INT_UART_SEND:
-                fprintf(f, "uart send from '%s', done? into '%s'",
-                    IntCode[i].name1, IntCode[i].name2);
+                fprintf(f, "uart send from '%s', done? into '%s'", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_UART_SEND_READY:
@@ -385,21 +392,21 @@ void IntDumpListing(char *outFile)
 
             case INT_UART_RECVn:
             case INT_UART_RECV:
-                fprintf(f, "uart recv int '%s', have? into '%s'",
-                    IntCode[i].name1, IntCode[i].name2);
+                fprintf(f, "uart recv int '%s', have? into '%s'", IntCode[i].name1, IntCode[i].name2);
                 break;
 
             case INT_UART_RECV_AVAIL:
-                fprintf(f, "'%s' = is uart receive data available ?",
-                    IntCode[i].name1);
+                fprintf(f, "'%s' = is uart receive data available ?", IntCode[i].name1);
                 break;
 
             case INT_IF_BIT_SET:
-                fprintf(f, "if '%s' {", IntCode[i].name1); indent++;
+                fprintf(f, "if '%s' {", IntCode[i].name1);
+                indent++;
                 break;
 
             case INT_IF_BIT_CLEAR:
-                fprintf(f, "if not '%s' {", IntCode[i].name1); indent++;
+                fprintf(f, "if not '%s' {", IntCode[i].name1);
+                indent++;
                 break;
 
             case INT_SLEEP:
@@ -427,74 +434,79 @@ void IntDumpListing(char *outFile)
                 break;
 
             case INT_IF_BIT_SET_IN_VAR: // TODO
-                fprintf(f, "if ('%s' & (1<<%d)) != 0  {", IntCode[i].name1, IntCode[i].name2); indent++;
+                fprintf(f, "if ('%s' & (1<<%d)) != 0  {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
 
             case INT_IF_BIT_CLEAR_IN_VAR: // TODO
-                fprintf(f, "if ('%s' & (1<<%d)) == 0 {", IntCode[i].name1, IntCode[i].name2); indent++;
+                fprintf(f, "if ('%s' & (1<<%d)) == 0 {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
             case INT_IF_BITS_SET_IN_VAR: // TODO
-                fprintf(f, "if ('%s' & %d) == %d  {", IntCode[i].name1, IntCode[i].literal, IntCode[i].literal); indent++;
+                fprintf(f, "if ('%s' & %d) == %d  {", IntCode[i].name1, IntCode[i].literal, IntCode[i].literal);
+                indent++;
                 break;
             case INT_IF_BITS_CLEAR_IN_VAR: // TODO
-                fprintf(f, "if ('%s' & %d) == 0 {", IntCode[i].name1, IntCode[i].literal); indent++;
+                fprintf(f, "if ('%s' & %d) == 0 {", IntCode[i].name1, IntCode[i].literal);
+                indent++;
                 break;
 
-            #ifndef NEW_CMP
+#ifndef NEW_CMP
             case INT_IF_VARIABLE_LES_LITERAL:
-                fprintf(f, "if '%s' < %d {", IntCode[i].name1,
-                    IntCode[i].literal); indent++;
+                fprintf(f, "if '%s' < %d {", IntCode[i].name1, IntCode[i].literal);
+                indent++;
                 break;
 
             case INT_IF_VARIABLE_EQUALS_VARIABLE:
-                fprintf(f, "if '%s' == '%s' {", IntCode[i].name1,
-                    IntCode[i].name2); indent++;
+                fprintf(f, "if '%s' == '%s' {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
 
             case INT_IF_VARIABLE_GRT_VARIABLE:
-                fprintf(f, "if '%s' > '%s' {", IntCode[i].name1,
-                    IntCode[i].name2); indent++;
+                fprintf(f, "if '%s' > '%s' {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
-            #endif
+#endif
 
-            #ifdef NEW_CMP
+#ifdef NEW_CMP
             case INT_IF_GRT:
-                fprintf(f, "if '%s' > '%s' {", IntCode[i].name1,
-                    IntCode[i].name2); indent++;
+                fprintf(f, "if '%s' > '%s' {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
 
             case INT_IF_GEQ:
-                fprintf(f, "if '%s' >= '%s' {", IntCode[i].name1,
-                    IntCode[i].name2); indent++;
+                fprintf(f, "if '%s' >= '%s' {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
 
             case INT_IF_LES:
-                fprintf(f, "if '%s' < '%s' {", IntCode[i].name1,
-                    IntCode[i].name2); indent++;
+                fprintf(f, "if '%s' < '%s' {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
 
             case INT_IF_LEQ:
-                fprintf(f, "if '%s' <= '%s' {", IntCode[i].name1,
-                    IntCode[i].name2); indent++;
+                fprintf(f, "if '%s' <= '%s' {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
 
             case INT_IF_NEQ:
-                fprintf(f, "if '%s' != '%s' {", IntCode[i].name1,
-                    IntCode[i].name2); indent++;
+                fprintf(f, "if '%s' != '%s' {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
 
             case INT_IF_EQU:
-                fprintf(f, "if '%s' == '%s' {", IntCode[i].name1,
-                    IntCode[i].name2); indent++;
+                fprintf(f, "if '%s' == '%s' {", IntCode[i].name1, IntCode[i].name2);
+                indent++;
                 break;
-            #endif
+#endif
 
             case INT_END_IF:
                 fprintf(f, "}");
                 break;
 
             case INT_ELSE:
-                fprintf(f, "} else {"); indent++;
+                fprintf(f, "} else {");
+                indent++;
                 break;
 
             case INT_SIMULATE_NODE_STATE:
@@ -505,7 +517,7 @@ void IntDumpListing(char *outFile)
                 fprintf(f, "# %s", IntCode[i].name1);
                 break;
 
-            #ifdef USE_SFR
+#ifdef USE_SFR
             // Special function
             case INT_READ_SFR_LITERAL:
             case INT_WRITE_SFR_LITERAL:
@@ -544,9 +556,15 @@ void IntDumpListing(char *outFile)
                     case INT_TEST_C_SFR_LITERAL_L:
                     case INT_TEST_C_SFR_VARIABLE_L:
                         fprintf(f, "if ");
-
                 }
-                fprintf(f, "SFR %d %s %s %s %d %d",IntCode[i].op, IntCode[i].name1, IntCode[i].name2, IntCode[i].name3, IntCode[i].literal, IntCode[i].literal2);
+                fprintf(f,
+                        "SFR %d %s %s %s %d %d",
+                        IntCode[i].op,
+                        IntCode[i].name1,
+                        IntCode[i].name2,
+                        IntCode[i].name3,
+                        IntCode[i].literal,
+                        IntCode[i].literal2);
                 switch(IntCode[i].op) {
                     case INT_TEST_SFR_LITERAL_L:
                     case INT_TEST_SFR_VARIABLE_L:
@@ -558,8 +576,8 @@ void IntDumpListing(char *outFile)
                         indent++;
                 }
                 break;
-            // Special function
-            #endif
+// Special function
+#endif
 
             case INT_AllocKnownAddr:
                 //fprintf(f, "AllocKnownAddr %s %s AddrOfRung%d;", IntCode[i].name1, IntCode[i].name2, IntCode[i].literal+1);
@@ -570,21 +588,21 @@ void IntDumpListing(char *outFile)
                 break;
 
             case INT_FwdAddrIsNow:
-                fprintf(f, "LabelRung%d: // %s", IntCode[i].literal+1, IntCode[i].name1);
+                fprintf(f, "LabelRung%d: // %s", IntCode[i].literal + 1, IntCode[i].name1);
                 break;
 
             case INT_GOTO:
                 if(IsNumber(IntCode[i].name1))
-                    fprintf(f, "GOTO LabelRung%s; #LabelRung%d", IntCode[i].name1, IntCode[i].literal+1);
+                    fprintf(f, "GOTO LabelRung%s; #LabelRung%d", IntCode[i].name1, IntCode[i].literal + 1);
                 else
-                    fprintf(f, "GOTO %s; #LabelRung%d", IntCode[i].name1, IntCode[i].literal+1);
+                    fprintf(f, "GOTO %s; #LabelRung%d", IntCode[i].name1, IntCode[i].literal + 1);
                 break;
 
             case INT_GOSUB:
                 if(IsNumber(IntCode[i].name1))
-                    fprintf(f, "GOSUB LabelRung%s; #LabelRung%d", IntCode[i].name1, IntCode[i].literal+1);
+                    fprintf(f, "GOSUB LabelRung%s; #LabelRung%d", IntCode[i].name1, IntCode[i].literal + 1);
                 else
-                    fprintf(f, "GOSUB %s; #LabelRung%d", IntCode[i].name1, IntCode[i].literal+1);
+                    fprintf(f, "GOSUB %s; #LabelRung%d", IntCode[i].name1, IntCode[i].literal + 1);
                 break;
 
             case INT_RETURN:
@@ -595,19 +613,27 @@ void IntDumpListing(char *outFile)
                 fprintf(f, "sprintf(%s, \"%s\", %s);", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 break;
 
-            #ifdef TABLE_IN_FLASH
+#ifdef TABLE_IN_FLASH
             case INT_FLASH_INIT:
-                fprintf(f, "INIT TABLE signed %d byte %s[%d] := {", IntCode[i].literal2, IntCode[i].name1, IntCode[i].literal);
+                fprintf(f,
+                        "INIT TABLE signed %d byte %s[%d] := {",
+                        IntCode[i].literal2,
+                        IntCode[i].name1,
+                        IntCode[i].literal);
                 int j;
-                for(j = 0; j < (IntCode[i].literal-1); j++) {
-                  fprintf(f, "%d, ", IntCode[i].data[j]);
+                for(j = 0; j < (IntCode[i].literal - 1); j++) {
+                    fprintf(f, "%d, ", IntCode[i].data[j]);
                 }
-                fprintf(f, "%d}", IntCode[i].data[IntCode[i].literal-1]);
+                fprintf(f, "%d}", IntCode[i].data[IntCode[i].literal - 1]);
                 break;
 
             case INT_RAM_READ:
                 if(IsNumber(IntCode[i].name3)) {
-                    fprintf(f, "let var '%s' := '%s[%d]'", IntCode[i].name2, IntCode[i].name1, CheckMakeNumber(IntCode[i].name3));
+                    fprintf(f,
+                            "let var '%s' := '%s[%d]'",
+                            IntCode[i].name2,
+                            IntCode[i].name1,
+                            CheckMakeNumber(IntCode[i].name3));
                 } else {
                     fprintf(f, "let var '%s' := '%s[%s]'", IntCode[i].name2, IntCode[i].name1, IntCode[i].name3);
                 }
@@ -615,19 +641,24 @@ void IntDumpListing(char *outFile)
 
             case INT_FLASH_READ:
                 if(IsNumber(IntCode[i].name3)) {
-                    fprintf(f, "let var '%s' := %d # '%s[%s]'", IntCode[i].name1, IntCode[i].data[hobatoi(IntCode[i].name3)], IntCode[i].name2, IntCode[i].name3);
+                    fprintf(f,
+                            "let var '%s' := %d # '%s[%s]'",
+                            IntCode[i].name1,
+                            IntCode[i].data[hobatoi(IntCode[i].name3)],
+                            IntCode[i].name2,
+                            IntCode[i].name3);
                 } else {
                     fprintf(f, "let var '%s' := '%s[%s]'", IntCode[i].name1, IntCode[i].name2, IntCode[i].name3);
                 }
                 break;
-            #endif
+#endif
 
             default:
-                ooops("INT_%d",IntCode[i].op);
+                ooops("INT_%d", IntCode[i].op);
         }
         if((int_comment_level == 1)
-        ||( (IntCode[i].op != INT_SIMULATE_NODE_STATE)
-          &&(IntCode[i].op != INT_AllocKnownAddr)
+        ||( (IntCode[i].op != INT_SIMULATE_NODE_STATE)//
+          &&(IntCode[i].op != INT_AllocKnownAddr)//
           &&(IntCode[i].op != INT_AllocFwdAddr) ) ) {
             //fprintf(f, " ## INT_%d",IntCode[i].op);
             fprintf(f, "\n");
@@ -697,35 +728,40 @@ static void GenSymStepper(char *dest, char *name)
 //-----------------------------------------------------------------------------
 // Compile an instruction to the program.
 //-----------------------------------------------------------------------------
-static void _Op(int l, const char *f, const char *args, int op, BOOL *b,
-                const char *name1, const char *name2, const char *name3, const char *name4, const char *name5, const char *name6,
-                SDWORD lit, SDWORD lit2, SDWORD *data)
+static void _Op(int l, const char *f, const char *args, int op, BOOL *b, const char *name1, const char *name2,
+                const char *name3, const char *name4, const char *name5, const char *name6, SDWORD lit, SDWORD lit2,
+                SDWORD *data)
 {
     memset(&IntCode[IntCodeLen], sizeof(IntCode[IntCodeLen]), 0);
     IntCode[IntCodeLen].op = op;
-    if(name1) strcpy(IntCode[IntCodeLen].name1, name1);
-    if(name2) strcpy(IntCode[IntCodeLen].name2, name2);
-    if(name3) strcpy(IntCode[IntCodeLen].name3, name3);
-    if(name4) strcpy(IntCode[IntCodeLen].name4, name4);
-    if(name5) strcpy(IntCode[IntCodeLen].name5, name5);
-    if(name6) strcpy(IntCode[IntCodeLen].name6, name6);
+    if(name1)
+        strcpy(IntCode[IntCodeLen].name1, name1);
+    if(name2)
+        strcpy(IntCode[IntCodeLen].name2, name2);
+    if(name3)
+        strcpy(IntCode[IntCodeLen].name3, name3);
+    if(name4)
+        strcpy(IntCode[IntCodeLen].name4, name4);
+    if(name5)
+        strcpy(IntCode[IntCodeLen].name5, name5);
+    if(name6)
+        strcpy(IntCode[IntCodeLen].name6, name6);
     IntCode[IntCodeLen].literal = lit;
-    #ifdef NEW_CMP
-    if((op==INT_IF_LES)
-    || (op==INT_IF_VARIABLE_LES_LITERAL))
-    if(!name2) {
-        sprintf(IntCode[IntCodeLen].name2, "%d", lit);
-    }
-    #endif
+#ifdef NEW_CMP
+    if((op == INT_IF_LES) || (op == INT_IF_VARIABLE_LES_LITERAL))
+        if(!name2) {
+            sprintf(IntCode[IntCodeLen].name2, "%d", lit);
+        }
+#endif
     IntCode[IntCodeLen].literal2 = lit2;
     IntCode[IntCodeLen].data = data;
     IntCode[IntCodeLen].rung = rungNow;
     IntCode[IntCodeLen].which = whichNow;
     IntCode[IntCodeLen].leaf = leafNow;
     if(b)
-    IntCode[IntCodeLen].poweredAfter = b;
+        IntCode[IntCodeLen].poweredAfter = b;
     else
-    IntCode[IntCodeLen].poweredAfter = &(leafNow->poweredAfter);
+        IntCode[IntCodeLen].poweredAfter = &(leafNow->poweredAfter);
     IntCode[IntCodeLen].l = l;
     strcpy(IntCode[IntCodeLen].f, f);
     IntCodeLen++;
@@ -759,7 +795,8 @@ static void _Op(int l, const char *f, const char *args, int op)
 {
     _Op(l, f, args, op, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL);
 }
-static void _Op(int l, const char *f, const char *args, int op, const char *name1, const char *name2, const char *name3, SDWORD lit)
+static void _Op(int l, const char *f, const char *args, int op, const char *name1, const char *name2, const char *name3,
+                SDWORD lit)
 {
     _Op(l, f, args, op, NULL, name1, name2, name3, NULL, NULL, NULL, lit, 0, NULL);
 }
@@ -768,18 +805,20 @@ static void _Op(int l, const char *f, const char *args, int op, const char *name
     _Op(l, f, args, op, NULL, name1, name2, name3, NULL, NULL, NULL, 0, 0, NULL);
 }
 //
-static void _Op(int l, const char *f, const char *args, int op, const char *name1, const char *name2, const char *name3, SDWORD lit, SDWORD lit2)
+static void _Op(int l, const char *f, const char *args, int op, const char *name1, const char *name2, const char *name3,
+                SDWORD lit, SDWORD lit2)
 {
     _Op(l, f, args, op, NULL, name1, name2, name3, NULL, NULL, NULL, lit, lit2, NULL);
 }
 //
-static void _Op(int l, const char *f, const char *args, int op, const char *name1, const char *name2, const char *name3, const char *name4)
+static void _Op(int l, const char *f, const char *args, int op, const char *name1, const char *name2, const char *name3,
+                const char *name4)
 {
     _Op(l, f, args, op, NULL, name1, name2, name3, name4, NULL, NULL, 0, 0, NULL);
 }
 //
-static void _Op(int l, const char *f, const char *args, int op,
-                const char *name1, const char *name2, const char *name3, const char *name4, const char *name5)
+static void _Op(int l, const char *f, const char *args, int op, const char *name1, const char *name2, const char *name3,
+                const char *name4, const char *name5)
 {
     _Op(l, f, args, op, NULL, name1, name2, name3, name4, name5, NULL, 0, 0, NULL);
 }
@@ -804,7 +843,8 @@ static void SimState(BOOL *b, const char *name, BOOL *w, const char *name2)
     IntCode[IntCodeLen].poweredAfter = b;
     IntCode[IntCodeLen].workingNow = w;
     strcpy(IntCode[IntCodeLen].name1, name);
-    if(name2) strcpy(IntCode[IntCodeLen].name2, name2);
+    if(name2)
+        strcpy(IntCode[IntCodeLen].name2, name2);
     IntCode[IntCodeLen].rung = rungNow;
     IntCode[IntCodeLen].which = whichNow;
     IntCode[IntCodeLen].leaf = leafNow;
@@ -825,36 +865,36 @@ static void SimState(BOOL *b, const char *name)
 //-----------------------------------------------------------------------------
 static void _Comment1(int l, const char *f, const char *str)
 {
-  if(int_comment_level) {
-    char buf[MAX_NAME_LEN];
-    strncpy(buf, str, MAX_NAME_LEN-1);
-    buf[MAX_NAME_LEN-1] = '\0';
-    // http://demin.ws/blog/russian/2013/01/28/use-snprintf-on-different-platforms/
-    _Op(l, f, NULL, INT_COMMENT, buf);
-  }
+    if(int_comment_level) {
+        char buf[MAX_NAME_LEN];
+        strncpy(buf, str, MAX_NAME_LEN - 1);
+        buf[MAX_NAME_LEN - 1] = '\0';
+        // http://demin.ws/blog/russian/2013/01/28/use-snprintf-on-different-platforms/
+        _Op(l, f, NULL, INT_COMMENT, buf);
+    }
 }
 #define Comment1(str) _Comment1(__LINE__, __FILE__, str)
 
 static void _Comment(int l, const char *f, const char *str, ...)
 {
-  if(int_comment_level) {
-    va_list v;
-    char buf[MAX_NAME_LEN];
-    va_start(v, str);
-    vsnprintf(buf, MAX_NAME_LEN, str, v);
-    _Op(l, f, NULL, INT_COMMENT, buf);
-  }
+    if(int_comment_level) {
+        va_list v;
+        char    buf[MAX_NAME_LEN];
+        va_start(v, str);
+        vsnprintf(buf, MAX_NAME_LEN, str, v);
+        _Op(l, f, NULL, INT_COMMENT, buf);
+    }
 }
 
 static void _Comment(int l, const char *f, int level, const char *str, ...)
 {
-  if(int_comment_level && (int_comment_level >= level)) {
-    va_list v;
-    char buf[MAX_NAME_LEN];
-    va_start(v, str);
-    vsnprintf(buf, MAX_NAME_LEN, str, v);
-    _Op(l, f, NULL, INT_COMMENT, buf);
-  }
+    if(int_comment_level && (int_comment_level >= level)) {
+        va_list v;
+        char    buf[MAX_NAME_LEN];
+        va_start(v, str);
+        vsnprintf(buf, MAX_NAME_LEN, str, v);
+        _Op(l, f, NULL, INT_COMMENT, buf);
+    }
 }
 
 #define Comment(...) _Comment(__LINE__, __FILE__, __VA_ARGS__)
@@ -866,44 +906,54 @@ SDWORD TestTimerPeriod(char *name, SDWORD delay, int adjust) // delay in us
         Error("%s '%s': %s", _("Timer"), name, _("Delay cannot be zero or negative."));
         return -1;
     }
-    long long int period=0, adjPeriod=0, maxPeriod=0;
+    long long int period = 0, adjPeriod = 0, maxPeriod = 0;
     period = delay / Prog.cycleTime; // - 1;
     adjPeriod = (delay + Prog.cycleTime * adjust) / Prog.cycleTime;
 
     int b = byteNeeded(period);
-    if((SizeOfVar(name) != b) && (b<=4))
+    if((SizeOfVar(name) != b) && (b <= 4))
         SetSizeOfVar(name, b);
-    maxPeriod = (long long int)(1) << (SizeOfVar(name)*8-1); maxPeriod--;
+    maxPeriod = (long long int)(1) << (SizeOfVar(name) * 8 - 1);
+    maxPeriod--;
 
     if(period < 0) {
         Error(_("Delay cannot be zero or negative."));
-    } else if(period <= 0)  {
+    } else if(period <= 0) {
         char s1[1024];
         sprintf(s1, "%s %s", _("Timer period too short (needs faster cycle time)."), _("Or increase timer period."));
         char s2[1024];
-        sprintf(s2, _("Timer '%s'=%.3f ms."), name, 1.0*delay/1000);
+        sprintf(s2, _("Timer '%s'=%.3f ms."), name, 1.0 * delay / 1000);
         char s3[1024];
-        sprintf(s3, _("Minimum available timer period = PLC cycle time = %.3f ms."), 1.0*Prog.cycleTime/1000);
+        sprintf(s3, _("Minimum available timer period = PLC cycle time = %.3f ms."), 1.0 * Prog.cycleTime / 1000);
         const char *s4 = _("Not available");
         Error("%s\n\r%s %s\r\n%s", s1, s4, s2, s3);
-    } else if(period+adjust <= 0) {
-        Error("%s '%s': %s", _("Timer"), name, _("Total timer delay cannot be zero or negative. Increase the adjust value!"));
+    } else if(period + adjust <= 0) {
+        Error("%s '%s': %s",
+              _("Timer"),
+              name,
+              _("Total timer delay cannot be zero or negative. Increase the adjust value!"));
         // period = -1;
     } else if(period <= adjust) {
-        Error("%s '%s': %s", _("Timer"), name, _("Adjusting the timer delay to a value greater than or near than the timer delay is meaningless. Decrease the adjust value!"));
+        Error(
+            "%s '%s': %s",
+            _("Timer"),
+            name,
+            _("Adjusting the timer delay to a value greater than or near than the timer delay is meaningless. Decrease the adjust value!"));
         // period = -1;
     }
 
-    if(((period > maxPeriod) || (adjPeriod > maxPeriod))
-    && (Prog.mcu)
-    && (Prog.mcu->portPrefix != 'L')) {
+    if(((period > maxPeriod) || (adjPeriod > maxPeriod)) && (Prog.mcu) && (Prog.mcu->portPrefix != 'L')) {
         char s1[1024];
         sprintf(s1, "%s %s", _("Timer period too long; (use a slower cycle time)."), _("Or decrease timer period."));
         char s2[1024];
-        sprintf(s2, _("Timer 'T%s'=%10.0Lf s   needs %15lld PLC cycle times."), name, 1.0*delay/1000, period);
+        sprintf(s2, _("Timer 'T%s'=%10.0Lf s   needs %15lld PLC cycle times."), name, 1.0 * delay / 1000, period);
         long double maxDelay = 1.0 * maxPeriod / 1000000 * Prog.cycleTime; // s
-        char s3[1024];
-        sprintf(s3, _("Timer 'T%s'=%10.0Lf s can use %15lld PLC cycle times as the MAXIMUM possible value."), name, maxDelay, maxPeriod);
+        char        s3[1024];
+        sprintf(s3,
+                _("Timer 'T%s'=%10.0Lf s can use %15lld PLC cycle times as the MAXIMUM possible value."),
+                name,
+                maxDelay,
+                maxPeriod);
         Error("%s\r\n%s\r\n%s", s1, s2, s3);
         period = -1;
     }
@@ -930,17 +980,19 @@ static SDWORD TimerPeriod(ElemLeaf *l)
 //-----------------------------------------------------------------------------
 SDWORD CalcDelayClock(long long clocks) // in us
 {
-    #if 1 // 1
+#if 1 // 1
     clocks = clocks * Prog.mcuClock / 1000000;
     if(Prog.mcu) {
         if(Prog.mcu->whichIsa == ISA_AVR) {
             ;
         } else if(Prog.mcu->whichIsa == ISA_PIC16) {
             clocks = clocks / 4;
-        } else oops();
+        } else
+            oops();
     }
-    if(clocks <= 0 ) clocks = 1;
-    #endif
+    if(clocks <= 0)
+        clocks = 1;
+#endif
     return (SDWORD)clocks;
 }
 
@@ -958,13 +1010,13 @@ BOOL IsNumber(const char *str)
         while(isspace(*str))
             str++;
         if(isdigit(*str))
-                return TRUE;
-            else
-                return FALSE;
+            return TRUE;
+        else
+            return FALSE;
     } else if(*str == '\'') {
         // special case--literal single character
-        if(strlen(str)>2) {
-            if(str[strlen(str)-1] == '\'')
+        if(strlen(str) > 2) {
+            if(str[strlen(str) - 1] == '\'')
                 return TRUE;
             else
                 return FALSE;
@@ -976,18 +1028,18 @@ BOOL IsNumber(const char *str)
 }
 
 //-----------------------------------------------------------------------------
-BOOL CheckForNumber(char * str)
+BOOL CheckForNumber(char *str)
 {
     if(IsNumber(str)) {
-        int radix = 0; //auto detect
+        int   radix = 0; //auto detect
         char *start_ptr = str;
         while(isspace(*start_ptr) || *start_ptr == '-' || *start_ptr == '+')
             start_ptr++;
 
-        if(*start_ptr == '\'')   {
+        if(*start_ptr == '\'') {
             // special case--literal single character
-            if(strlen(start_ptr)>2) {
-                if(str[strlen(start_ptr)-1] == '\'')
+            if(strlen(start_ptr) > 2) {
+                if(str[strlen(start_ptr) - 1] == '\'')
                     return TRUE;
                 else
                     return FALSE;
@@ -1024,11 +1076,11 @@ double hobatof(char *str)
 //-----------------------------------------------------------------------------
 int getradix(const char *str)
 {
-    int radix = 0;
+    int         radix = 0;
     const char *start_ptr = str;
     while(isspace(*start_ptr) || *start_ptr == '-' || *start_ptr == '+')
         start_ptr++;
-    if     ((start_ptr[0] != '0') && isdigit(start_ptr[0]))
+    if((start_ptr[0] != '0') && isdigit(start_ptr[0]))
         radix = 10;
     else if((start_ptr[0] == '0') && (strlen(start_ptr) == 1))
         radix = 10;
@@ -1054,42 +1106,41 @@ SDWORD hobatoi(const char *str)
     if(strstr(toupperstr(s, str), "0XFFFFFFFF"))
         return 0xFFFFFFFF;
 
-    long val;
+    long        val;
     const char *start_ptr = str;
     while(isspace(*start_ptr))
         start_ptr++;
     if(*start_ptr == '\'') {
         char dest[MAX_NAME_LEN];
         FrmStrToStr(dest, start_ptr);
-        if( (strlen(dest) > 3) || (dest[0]!='\'') || (dest[2]!='\'') ) {
+        if((strlen(dest) > 3) || (dest[0] != '\'') || (dest[2] != '\'')) {
             Error("Expected single-character or one simple-escape-sequence in single-quotes: <%s>!", str);
         }
         val = dest[1];
     } else {
-       while(isspace(*start_ptr) || *start_ptr == '-' || *start_ptr == '+') {
-           start_ptr++;
-       }
-       int radix = 0; //auto detect
-       if(*start_ptr == '0')
-           {
-               if(toupper(start_ptr[1]) == 'B')
-                   radix = 2;
-               else if(toupper(start_ptr[1]) == 'O')
-                   radix = 8;
-               else if(toupper(start_ptr[1]) == 'X')
-                   radix = 16;
-           }
-       char *end_ptr = NULL;
-       // errno = 0;
-       val = strtol(str, &end_ptr, radix);
-       if(*end_ptr) {
-//         val = 0;
-//         Error("Conversion error the\n'%s' string into number %d at\n'%s' position.", str, val, end_ptr);
-       }
-       if((val == LONG_MAX || val == LONG_MIN) && errno == ERANGE) {
-//         val = 0;
-//         Error("Conversion overflow error the string\n'%s' into number %d.", str, val);
-       }
+        while(isspace(*start_ptr) || *start_ptr == '-' || *start_ptr == '+') {
+            start_ptr++;
+        }
+        int radix = 0; //auto detect
+        if(*start_ptr == '0') {
+            if(toupper(start_ptr[1]) == 'B')
+                radix = 2;
+            else if(toupper(start_ptr[1]) == 'O')
+                radix = 8;
+            else if(toupper(start_ptr[1]) == 'X')
+                radix = 16;
+        }
+        char *end_ptr = NULL;
+        // errno = 0;
+        val = strtol(str, &end_ptr, radix);
+        if(*end_ptr) {
+            //         val = 0;
+            //         Error("Conversion error the\n'%s' string into number %d at\n'%s' position.", str, val, end_ptr);
+        }
+        if((val == LONG_MAX || val == LONG_MIN) && errno == ERANGE) {
+            //         val = 0;
+            //         Error("Conversion overflow error the string\n'%s' into number %d.", str, val);
+        }
     }
     return val;
 }
@@ -1138,7 +1189,7 @@ static BOOL CheckStaySameElem(int which, void *elem)
     switch(which) {
         case ELEM_SERIES_SUBCKT: {
             ElemSubcktSeries *s = (ElemSubcktSeries *)elem;
-            int i;
+            int               i;
             for(i = 0; i < s->count; i++) {
                 if(!CheckStaySameElem(s->contents[i].which, s->contents[i].data.any))
                     return FALSE;
@@ -1146,11 +1197,11 @@ static BOOL CheckStaySameElem(int which, void *elem)
             return TRUE;
         }
         case ELEM_PARALLEL_SUBCKT: {
-            int i;
+            int                 i;
             ElemSubcktParallel *p = (ElemSubcktParallel *)elem;
             for(i = 0; i < p->count; i++) {
                 if(!CheckStaySameElem(p->contents[i].which, p->contents[i].data.any))
-                     return FALSE;
+                    return FALSE;
             }
             return TRUE;
         }
@@ -1168,11 +1219,11 @@ static BOOL CheckEndOfRungElem(int which, void *elem)
         case ELEM_SERIES_SUBCKT: {
             ElemSubcktSeries *s = (ElemSubcktSeries *)elem;
 
-            return CheckEndOfRungElem(s->contents[s->count-1].which,s->contents[s->count-1].data.any);
+            return CheckEndOfRungElem(s->contents[s->count - 1].which, s->contents[s->count - 1].data.any);
         }
         case ELEM_PARALLEL_SUBCKT: {
             ElemSubcktParallel *p = (ElemSubcktParallel *)elem;
-            int i;
+            int                 i;
             for(i = 0; i < p->count; i++) {
                 if(CheckEndOfRungElem(p->contents[i].which, p->contents[i].data.any))
                     return TRUE;
@@ -1202,7 +1253,7 @@ static BOOL CheckCanChangeOutputElem(int which, void *elem)
         }
         case ELEM_PARALLEL_SUBCKT: {
             ElemSubcktParallel *p = (ElemSubcktParallel *)elem;
-            int i;
+            int                 i;
             for(i = 0; i < p->count; i++) {
                 if(CheckCanChangeOutputElem(p->contents[i].which, p->contents[i].data.any))
                     return TRUE;
@@ -1218,9 +1269,9 @@ static BOOL CheckCanChangeOutputElem(int which, void *elem)
 void OpSetVar(char *op1, char *op2)
 {
     if(IsNumber(op2))
-      Op(INT_SET_VARIABLE_TO_LITERAL, op1, (SDWORD)hobatoi(op2));
+        Op(INT_SET_VARIABLE_TO_LITERAL, op1, (SDWORD)hobatoi(op2));
     else
-      Op(INT_SET_VARIABLE_TO_VARIABLE, op1, op2);
+        Op(INT_SET_VARIABLE_TO_VARIABLE, op1, op2);
 }
 //-----------------------------------------------------------------------------
 static void InitVarsCircuit(int which, void *elem, int *n)
@@ -1229,19 +1280,19 @@ static void InitVarsCircuit(int which, void *elem, int *n)
     switch(which) {
         case ELEM_SERIES_SUBCKT: {
             ElemSubcktSeries *s = (ElemSubcktSeries *)elem;
-            int i;
+            int               i;
             for(i = 0; i < s->count; i++)
                 InitVarsCircuit(s->contents[i].which, s->contents[i].data.any, n);
             break;
         }
         case ELEM_PARALLEL_SUBCKT: {
             ElemSubcktParallel *p = (ElemSubcktParallel *)elem;
-            int i;
+            int                 i;
             for(i = 0; i < p->count; i++)
                 InitVarsCircuit(p->contents[i].which, p->contents[i].data.any, n);
             break;
         }
-        #ifndef NEW_TON
+#ifndef NEW_TON
         case ELEM_TOF: {
             if(n)
                 (*n)++; // counting the number of variables
@@ -1251,8 +1302,8 @@ static void InitVarsCircuit(int which, void *elem, int *n)
             }
             break;
         }
-        #endif
-        #ifdef NEW_TON
+#endif
+#ifdef NEW_TON
         case ELEM_TCY: {
             if(n)
                 (*n)++; // counting the number of variables
@@ -1271,7 +1322,7 @@ static void InitVarsCircuit(int which, void *elem, int *n)
             }
             break;
         }
-        #endif
+#endif
         case ELEM_SEED_RANDOM: {
             char name[MAX_NAME_LEN];
             sprintf(name, "$seed_%s", l->d.readAdc.name);
@@ -1293,11 +1344,11 @@ static void InitVarsCircuit(int which, void *elem, int *n)
                 if(SizeOfVar(l->d.counter.name) != b)
                     SetSizeOfVar(l->d.counter.name, b);
                 //if(init != 0) { // need reinit if CTD(c1), CTU(c1)
-                    if(n)
-                        (*n)++; // counting the number of variables
-                    else {
-                        Op(INT_SET_VARIABLE_TO_LITERAL, l->d.counter.name, init);
-                    }
+                if(n)
+                    (*n)++; // counting the number of variables
+                else {
+                    Op(INT_SET_VARIABLE_TO_LITERAL, l->d.counter.name, init);
+                }
                 //}
             }
             break;
@@ -1316,16 +1367,16 @@ static void InitVars(void)
         InitVarsCircuit(ELEM_SERIES_SUBCKT, Prog.rungs[i], &n);
     }
     if(n) {
-      Comment("INIT VARS");
-      char storeInit[MAX_NAME_LEN];
-      GenSymOneShot(storeInit, "INIT", "VARS");
-      Op(INT_IF_BIT_CLEAR, storeInit);
+        Comment("INIT VARS");
+        char storeInit[MAX_NAME_LEN];
+        GenSymOneShot(storeInit, "INIT", "VARS");
+        Op(INT_IF_BIT_CLEAR, storeInit);
         Op(INT_SET_BIT, storeInit);
         for(i = 0; i < Prog.numRungs; i++) {
             rungNow = i;
             InitVarsCircuit(ELEM_SERIES_SUBCKT, Prog.rungs[i], NULL);
         }
-      Op(INT_END_IF);
+        Op(INT_END_IF);
     }
 }
 
@@ -1333,19 +1384,19 @@ static void InitVars(void)
 //-----------------------------------------------------------------------------
 static void InitTablesCircuit(int which, void *elem)
 {
-    int sovElement = 0;
+    int       sovElement = 0;
     ElemLeaf *l = (ElemLeaf *)elem;
     switch(which) {
         case ELEM_SERIES_SUBCKT: {
             ElemSubcktSeries *s = (ElemSubcktSeries *)elem;
-            int i;
+            int               i;
             for(i = 0; i < s->count; i++)
                 InitTablesCircuit(s->contents[i].which, s->contents[i].data.any);
             break;
         }
         case ELEM_PARALLEL_SUBCKT: {
             ElemSubcktParallel *p = (ElemSubcktParallel *)elem;
-            int i;
+            int                 i;
             for(i = 0; i < p->count; i++)
                 InitTablesCircuit(p->contents[i].which, p->contents[i].data.any);
             break;
@@ -1355,22 +1406,22 @@ static void InitTablesCircuit(int which, void *elem)
             ElemLookUpTable *t = &(l->d.lookUpTable);
 
             char nameTable[MAX_NAME_LEN];
-            sprintf(nameTable, "%s%s", t->name,""); // "LutElement");
+            sprintf(nameTable, "%s%s", t->name, ""); // "LutElement");
 
             int sovElement;
 
-            if((isVarInited(nameTable) < 0)
-            || (isVarInited(nameTable)==rungNow)) {
-                sovElement =  TestByteNeeded(t->count, t->vals);
+            if((isVarInited(nameTable) < 0) || (isVarInited(nameTable) == rungNow)) {
+                sovElement = TestByteNeeded(t->count, t->vals);
                 Op(INT_FLASH_INIT, nameTable, NULL, NULL, t->count, sovElement, t->vals);
             } else {
                 sovElement = SizeOfVar(nameTable);
                 if(sovElement < 1)
                     sovElement = 1;
-                Comment(_("INIT TABLE: signed %d bit %s[%d] see above"), 8*sovElement, nameTable);
+                Comment(_("INIT TABLE: signed %d bit %s[%d] see above"), 8 * sovElement, nameTable);
             }
             break;
         }
+        // clang-format off
         {
         const char *nameTable;
         case ELEM_7SEG:  nameTable = "char7seg";  goto xseg;
@@ -1380,6 +1431,7 @@ static void InitTablesCircuit(int which, void *elem)
         xseg:
             break;
         }
+        // clang-format o
         default:
             break;
     }
@@ -1412,7 +1464,7 @@ static const char *VarFromExpr(const char *expr, const char *tempName)
         return expr;
     }
 }
-#define PULSE \
+#define PULSE                           \
     Op(INT_SET_BIT, l->d.stepper.coil); \
     Op(INT_CLEAR_BIT, l->d.stepper.coil);
 
@@ -1425,13 +1477,12 @@ static void IntCodeFromCircuit(int which, void *any, const char *stateInOut, int
     ElemLeaf *l = (ElemLeaf *)any;
     switch(which) {
         case ELEM_SERIES_SUBCKT: {
-            int i;
+            int               i;
             ElemSubcktSeries *s = (ElemSubcktSeries *)any;
 
             Comment("start series [");
             for(i = 0; i < s->count; i++) {
-                IntCodeFromCircuit(s->contents[i].which, s->contents[i].data.any,
-                    stateInOut, rung);
+                IntCodeFromCircuit(s->contents[i].which, s->contents[i].data.any, stateInOut, rung);
             }
             Comment("] finish series");
             break;
@@ -1443,30 +1494,30 @@ static void IntCodeFromCircuit(int which, void *any, const char *stateInOut, int
             Comment("start parallel [");
             ElemSubcktParallel *p = (ElemSubcktParallel *)any;
 
-            int i;
+            int  i;
             BOOL ExistEnd = FALSE; //FALSE indicates that it is NEED to calculate the parOut
             for(i = 0; i < p->count; i++) {
-              if(CheckEndOfRungElem(p->contents[i].which, p->contents[i].data.any)) {
-                ExistEnd = TRUE; // TRUE indicates that it is NOT NEED to calculate the parOut
-                break;
-              }
+                if(CheckEndOfRungElem(p->contents[i].which, p->contents[i].data.any)) {
+                    ExistEnd = TRUE; // TRUE indicates that it is NOT NEED to calculate the parOut
+                    break;
+                }
             }
             BOOL CanChange = FALSE; // FALSE indicates that it is NOT NEED to calculate the parThis
             for(i = 0; i < p->count; i++) {
-              if(!CheckStaySameElem(p->contents[i].which, p->contents[i].data.any)) {
-                CanChange = TRUE; // TRUE indicates that it is NEED to calculate the parThis
-                break;
-              }
+                if(!CheckStaySameElem(p->contents[i].which, p->contents[i].data.any)) {
+                    CanChange = TRUE; // TRUE indicates that it is NEED to calculate the parThis
+                    break;
+                }
             }
 
-            #ifdef DEFAULT_PARALLEL_ALGORITHM
+#ifdef DEFAULT_PARALLEL_ALGORITHM
             // Return to default ELEM_PARALLEL_SUBCKT algorithm
             CanChange = TRUE;
             ExistEnd = FALSE;
-            #endif
+#endif
 
             if(ExistEnd == FALSE) {
-              GenSymParOut(parOut);
+                GenSymParOut(parOut);
 
               Op(INT_CLEAR_BIT, parOut);
             }

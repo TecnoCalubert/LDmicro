@@ -1026,7 +1026,7 @@ void FreeCircuit(int which, void *any)
             CheckFree(p);
             break;
         }
-        CASE_LEAF
+            CASE_LEAF
             ForgetFromGrid(any);
             CheckFree(any);
             break;
@@ -1089,7 +1089,7 @@ static BOOL ContainsElem(int which, void *any, ElemLeaf *seek)
             }
             break;
         }
-        CASE_LEAF
+            CASE_LEAF
             if(any == seek)
                 return TRUE;
             break;
@@ -1590,12 +1590,21 @@ BOOL TablesUsed(void)
 {
     int i;
     for(i = 0; i < Prog.numRungs; i++) {
-        if((ContainsWhich(ELEM_SERIES_SUBCKT, Prog.rungs[i],
-            ELEM_LOOK_UP_TABLE, ELEM_PIECEWISE_LINEAR, ELEM_SHIFT_REGISTER))
-        || (ContainsWhich(ELEM_SERIES_SUBCKT, Prog.rungs[i],
-            ELEM_FORMATTED_STRING, ELEM_7SEG, ELEM_9SEG))
-        || (ContainsWhich(ELEM_SERIES_SUBCKT, Prog.rungs[i],
-            ELEM_14SEG, ELEM_16SEG, -1))
+        if((ContainsWhich(ELEM_SERIES_SUBCKT,
+                          Prog.rungs[i], //
+                          ELEM_LOOK_UP_TABLE,
+                          ELEM_PIECEWISE_LINEAR,
+                          ELEM_SHIFT_REGISTER)) //
+           || (ContainsWhich(ELEM_SERIES_SUBCKT,
+                             Prog.rungs[i], //
+                             ELEM_FORMATTED_STRING,
+                             ELEM_7SEG,
+                             ELEM_9SEG)) //
+           || (ContainsWhich(ELEM_SERIES_SUBCKT,
+                             Prog.rungs[i], //
+                             ELEM_14SEG,
+                             ELEM_16SEG,
+                             -1)) //
         ) {
             return TRUE;
         }

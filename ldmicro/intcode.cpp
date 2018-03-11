@@ -127,8 +127,8 @@ void IntDumpListing(char *outFile)
             if(indent < 0)
                 indent = 0;
             if((IntCode[i].op != INT_SIMULATE_NODE_STATE) //
-            && (IntCode[i].op != INT_AllocKnownAddr) //
-            && (IntCode[i].op != INT_AllocFwdAddr))
+               && (IntCode[i].op != INT_AllocKnownAddr)   //
+               && (IntCode[i].op != INT_AllocFwdAddr))
                 fprintf(f, "%4d:", i);
         }
         int j;
@@ -657,9 +657,9 @@ void IntDumpListing(char *outFile)
                 ooops("INT_%d", IntCode[i].op);
         }
         if((int_comment_level == 1)
-        ||( (IntCode[i].op != INT_SIMULATE_NODE_STATE)//
-          &&(IntCode[i].op != INT_AllocKnownAddr)//
-          &&(IntCode[i].op != INT_AllocFwdAddr) ) ) {
+           || ((IntCode[i].op != INT_SIMULATE_NODE_STATE) //
+               && (IntCode[i].op != INT_AllocKnownAddr)   //
+               && (IntCode[i].op != INT_AllocFwdAddr))) {
             //fprintf(f, " ## INT_%d",IntCode[i].op);
             fprintf(f, "\n");
         }
@@ -1421,7 +1421,7 @@ static void InitTablesCircuit(int which, void *elem)
             }
             break;
         }
-        // clang-format off
+            // clang-format off
         {
         const char *nameTable;
         case ELEM_7SEG:  nameTable = "char7seg";  goto xseg;
